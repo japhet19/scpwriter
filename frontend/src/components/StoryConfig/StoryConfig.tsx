@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react'
 import styles from './StoryConfig.module.css'
+import { MODEL_CATEGORIES, DEFAULT_MODEL, getModelById, getCostIndicator, ModelInfo } from '@/config/models'
+import TerminalDropdown from '@/components/TerminalDropdown/TerminalDropdown'
 
 interface StoryConfigProps {
   onSubmit: (config: StoryConfiguration) => void
@@ -13,6 +15,7 @@ export interface StoryConfiguration {
   protagonist?: string
   horrorLevel: number
   enableRedaction: boolean
+  model: string
 }
 
 const exampleThemes = [
@@ -30,6 +33,7 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
   const [horrorLevel, setHorrorLevel] = useState(40)
   const [enableRedaction, setEnableRedaction] = useState(true)
   const [isGeneratingName, setIsGeneratingName] = useState(false)
+  const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL)
 
   const generateProtagonistName = () => {
     setIsGeneratingName(true)
@@ -55,7 +59,8 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
       pages,
       protagonist: protagonist.trim() || undefined,
       horrorLevel,
-      enableRedaction
+      enableRedaction,
+      model: selectedModel
     })
   }
 
@@ -136,6 +141,34 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
               >
                 {isGeneratingName ? 'GENERATING...' : 'GENERATE'}
               </button>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>▼ AI MODEL SELECTION</label>
+          <div className={styles.paramRow}>
+            <span>Model:</span>
+            <div className={styles.modelSelection}>
+              <TerminalDropdown
+                categories={MODEL_CATEGORIES}
+                value={selectedModel}
+                onChange={setSelectedModel}
+              />
+              {(() => {
+                const model = getModelById(selectedModel)
+                if (model) {
+                  return (
+                    <div className={styles.modelInfo}>
+                      <span className={styles.modelDescription}>{model.description}</span>
+                      <span className={styles.modelDetails}>
+                        {model.provider} • {model.contextLength?.toLocaleString()} tokens • {getCostIndicator(model.costLevel)}
+                      </span>
+                    </div>
+                  )
+                }
+                return null
+              })()}
             </div>
           </div>
         </div>

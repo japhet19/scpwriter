@@ -52,3 +52,38 @@ body,
 ::-webkit-scrollbar-thumb:hover {
   background: #00cc00;
 }
+
+/* Streaming message styles */
+.full-log-entry.streaming {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.full-log-entry.streaming .log-status {
+  color: #ff6600;
+  animation: blink 1s infinite;
+}
+
+.cursor {
+  display: inline-block;
+  animation: cursor-blink 1s infinite;
+  color: #00ff00;
+  font-weight: bold;
+}
+
+@keyframes cursor-blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { background: rgba(0, 255, 0, 0.02); }
+  50% { background: rgba(0, 255, 0, 0.05); }
+  100% { background: rgba(0, 255, 0, 0.02); }
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 1; }
+}

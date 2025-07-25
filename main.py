@@ -9,6 +9,10 @@ import argparse
 import sys
 import logging
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 from scp_coordinator import SCPCoordinator, StoryConfig
 

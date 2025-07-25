@@ -1,51 +1,44 @@
 import asyncio
 import logging
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
-try:
-    from claude_code_sdk import query, ClaudeCodeOptions
-except ImportError:
-    # Fallback for different SDK naming
-    from claude_sdk import query, ClaudeCodeOptions
+import os
 import re
+from openai import AsyncOpenAI
+from dotenv import load_dotenv
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.text_sanitizer import sanitize_text
+
+# Load environment variables
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 
 class BaseAgent:
-    """Base class for all agents in the SCP writer system."""
+    """Base class for all agents in the SCP writer system using OpenRouter."""
     
-    def __init__(self, name: str, system_prompt: str, orchestrator_callback=None):
+    def __init__(self, name: str, system_prompt: str, orchestrator_callback=None, model: Optional[str] = None):
         self.name = name
         self.system_prompt = system_prompt
-        self.session_id: Optional[str] = None
-        self.conversation_history = []
+        self.conversation_history: List[Dict[str, str]] = []
         self.logger = logging.getLogger(f"agent.{name}")
         self.orchestrator_callback = orchestrator_callback
         
-    def _extract_session_id(self, response: str) -> Optional[str]:
-        """Extract session ID from Claude's response if available."""
-        # Look for session_id in SystemMessage or ResultMessage
-        import re
+        # Initialize OpenAI client with OpenRouter configuration
+        self.client = AsyncOpenAI(
+            api_key=os.getenv("OPENROUTER_API_KEY"),
+            base_url="https://openrouter.ai/api/v1"
+        )
         
-        # Try to find session_id in various formats
-        patterns = [
-            r"session_id['\"]:\s*['\"]([a-f0-9-]+)['\"]",  # In dict format
-            r"session_id='([a-f0-9-]+)'",  # In repr format
-            r"'session_id':\s*'([a-f0-9-]+)'",  # JSON style
-        ]
+        # Use provided model or fall back to environment variable or default
+        if model:
+            self.model = model
+        else:
+            self.model = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
         
-        for pattern in patterns:
-            match = re.search(pattern, response)
-            if match:
-                return match.group(1)
-        
-        return None
-    
     def _format_timestamp(self) -> str:
         """Generate a formatted timestamp for messages."""
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -78,6 +71,47 @@ class BaseAgent:
         
         self.logger.info(f"Appended message to discussion file")
     
+    def _build_messages(self, trigger_message: str, include_output: bool = False) -> List[Dict[str, str]]:
+        """Build the message history for the API call."""
+        messages = []
+        
+        # Add system prompt
+        messages.append({
+            "role": "system",
+            "content": self.system_prompt
+        })
+        
+        # Add conversation history
+        for msg in self.conversation_history:
+            messages.append(msg)
+        
+        # Build context from discussion and optionally output file
+        discussion_content = self._read_discussion_file()
+        context = f"Current discussion:\n{discussion_content}"
+        
+        if include_output:
+            output_content = self._read_output_file()
+            context += f"\n\nCurrent story output:\n{output_content}"
+        
+        # Create the user message with context and trigger
+        user_content = f"""
+{context}
+
+The latest message triggering your response:
+{trigger_message}
+
+Based on your role and the current context, provide an appropriate response.
+Remember to include the complete story text when sharing drafts or revisions.
+Use ---BEGIN STORY--- and ---END STORY--- markers when sharing story content.
+"""
+        
+        messages.append({
+            "role": "user",
+            "content": user_content
+        })
+        
+        return messages
+    
     async def respond(self, trigger_message: str, include_output: bool = False, skip_callback: bool = False, stream_output: bool = True) -> str:
         """
         Generate a response based on the trigger message and current context.
@@ -91,148 +125,56 @@ class BaseAgent:
         Returns:
             The agent's response
         """
-        # Build context from discussion and optionally output file
-        discussion_content = self._read_discussion_file()
-        context = f"Current discussion:\n{discussion_content}"
-        
-        if include_output:
-            output_content = self._read_output_file()
-            context += f"\n\nCurrent story output:\n{output_content}"
-        
-        # Create the prompt
-        prompt = f"""
-You are {self.name}. 
-
-{context}
-
-The latest message triggering your response:
-{trigger_message}
-
-Based on your role and the current context, provide an appropriate response.
-Remember to check both the discussion file and (if relevant) the output file.
-"""
-        
-        # Set up options with session management
-        # Try with model specification first, fallback to default if issues
-        use_model = "claude-sonnet-4-20250514"  # Sonnet 4 for speed/cost
-        
-        if self.session_id:
-            # Continue existing conversation
-            options = ClaudeCodeOptions(
-                resume=self.session_id,
-                append_system_prompt=self.system_prompt,
-                cwd=Path(".").absolute(),
-                allowed_tools=["Read", "Edit"],  # Agents can read/write files
-                max_turns=20,  # Allow multiple turns for complex edits
-                model=use_model if use_model else None  # Optional model
-            )
-        else:
-            # Start new conversation
-            options = ClaudeCodeOptions(
-                append_system_prompt=self.system_prompt,
-                cwd=Path(".").absolute(),
-                allowed_tools=["Read", "Edit"],  # Agents can read/write files
-                max_turns=20,  # Allow multiple turns for complex edits
-                model=use_model if use_model else None  # Optional model
-            )
-        
         try:
-            response_text = ""
-            tool_was_used = False
+            # Build messages for the API call
+            messages = self._build_messages(trigger_message, include_output)
             
             # Print agent name if streaming
             if stream_output:
                 print(f"\n{self.name}: ", end="", flush=True)
             
-            async for message in query(prompt=prompt, options=options):
-                # Track all messages for complete response
-                class_name = message.__class__.__name__
-                
-                # Debug logging to understand message format
-                self.logger.debug(f"Received {class_name}: {message}")
-                
-                if class_name == 'SystemMessage':
-                    # Skip system messages but check for session ID
-                    pass
-                elif class_name == 'AssistantMessage' and hasattr(message, 'content'):
-                    # Handle AssistantMessage with content list
-                    if isinstance(message.content, list):
-                        for block in message.content:
-                            block_type = block.__class__.__name__
-                            if block_type == 'TextBlock' and hasattr(block, 'text'):
-                                text_chunk = block.text.strip()
-                                if text_chunk:
-                                    # Print complete text blocks as they arrive
-                                    if stream_output:
-                                        print(text_chunk)
-                                    response_text += text_chunk + "\n"
-                            elif block_type == 'ToolUseBlock':
-                                # Tool is being used, we'll capture results later
-                                tool_was_used = True
-                                if stream_output and hasattr(block, 'name'):
-                                    # Show tool use indicator
-                                    print(f"[Using {block.name} tool...]")
-                                self.logger.debug(f"Tool use detected: {block}")
-                    elif isinstance(message.content, str):
-                        if stream_output:
-                            print(message.content.strip())
-                        response_text += message.content.strip() + "\n"
-                elif class_name == 'UserMessage':
-                    # UserMessage often contains tool results
-                    if hasattr(message, 'content'):
-                        if isinstance(message.content, list):
-                            for item in message.content:
-                                if hasattr(item, 'content') and isinstance(item.content, str):
-                                    # This is likely a tool result
-                                    response_text += item.content.strip() + "\n"
-                                elif isinstance(item, str):
-                                    response_text += item.strip() + "\n"
-                        elif isinstance(message.content, str):
-                            response_text += message.content.strip() + "\n"
-                elif class_name == 'TextBlock' and hasattr(message, 'text'):
-                    # Direct TextBlock (shouldn't happen with our structure)
-                    response_text += message.text.strip() + "\n"
-                elif class_name == 'ResultMessage':
-                    # Skip result messages but log them
-                    self.logger.debug(f"Result message: {message}")
-                elif hasattr(message, 'text') and not class_name.startswith('Tool'):
-                    # Other messages with text attribute
-                    response_text += message.text.strip() + "\n"
-                elif hasattr(message, 'content') and isinstance(message.content, str):
-                    # Messages with string content
-                    response_text += message.content.strip() + "\n"
-                
-                # Extract session ID on first run
-                if not self.session_id:
-                    # Check for SystemMessage with session data
-                    if hasattr(message, 'data') and isinstance(message.data, dict) and 'session_id' in message.data:
-                        self.session_id = message.data['session_id']
-                        self.logger.info(f"Session ID set from SystemMessage: {self.session_id}")
-                        
-                        # Register with session manager if available
-                        if hasattr(self, 'session_manager') and self.session_manager:
-                            self.session_manager.register_agent(self.name, self.session_id)
-                    # Check if message has direct session_id attribute
-                    elif hasattr(message, 'session_id'):
-                        self.session_id = message.session_id
-                        self.logger.info(f"Session ID set from attribute: {self.session_id}")
-                    else:
-                        # Try to extract from string representation
-                        msg_str = str(message)
-                        extracted_id = self._extract_session_id(msg_str)
-                        if extracted_id:
-                            self.session_id = extracted_id
-                            self.logger.info(f"Session ID set from string: {self.session_id}")
+            response_text = ""
             
-            # Log the interaction
-            self.conversation_history.append({
-                "timestamp": self._format_timestamp(),
-                "trigger": trigger_message,
-                "response": response_text
-            })
+            # Make the API call with streaming
+            stream = await self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                stream=True,
+                temperature=0.7,
+                max_tokens=4000
+            )
+            
+            # Process the stream
+            async for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    text = chunk.choices[0].delta.content
+                    if stream_output:
+                        print(text, end="", flush=True)
+                    response_text += text
+            
+            if stream_output:
+                print()  # New line after streaming completes
             
             # Clean up response text
             response_text = response_text.strip()
+            
+            # Add to conversation history
+            self.conversation_history.append({
+                "role": "user",
+                "content": trigger_message
+            })
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": response_text
+            })
+            
+            # Limit conversation history to prevent token overflow
+            # Keep system prompt + last 10 exchanges (20 messages)
+            if len(self.conversation_history) > 20:
+                self.conversation_history = self.conversation_history[-20:]
+            
+            # Log the interaction
+            self.logger.info(f"Generated response of {len(response_text)} characters")
             
             # Only write non-empty responses to discussion file
             if response_text:
@@ -248,79 +190,60 @@ Remember to check both the discussion file and (if relevant) the output file.
             self.logger.error(f"Error generating response: {e}")
             raise
     
-    async def continue_session(self, new_prompt: str) -> str:
-        """Continue an existing session with a new prompt."""
-        if not self.session_id:
-            self.logger.warning("No session ID found, starting new session")
-            return await self.respond(new_prompt)
+    async def respond_streaming(self, trigger_message: str, include_output: bool = False, skip_callback: bool = False):
+        """
+        Generate a streaming response based on the trigger message and current context.
+        Yields chunks of text as they arrive from the API.
         
-        options = ClaudeCodeOptions(
-            resume=self.session_id,
-            continue_conversation=True,
-            append_system_prompt=self.system_prompt,
-            cwd=Path(".").absolute(),
-            allowed_tools=["Read", "Edit"],
-            max_turns=1
-        )
-        
+        Args:
+            trigger_message: The message that triggered this response
+            include_output: Whether to include the story output file in context
+            skip_callback: Whether to skip triggering the orchestrator callback
+            
+        Yields:
+            Text chunks as they arrive
+        """
         try:
+            # Build messages for the API call
+            messages = self._build_messages(trigger_message, include_output)
+            
+            # Make the API call with streaming
+            stream = await self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                stream=True,
+                temperature=0.7,
+                max_tokens=4000
+            )
+            
             response_text = ""
-            tool_was_used = False
             
-            async for message in query(prompt=new_prompt, options=options):
-                # Track all messages for complete response
-                class_name = message.__class__.__name__
-                
-                if class_name == 'SystemMessage':
-                    # Skip system messages
-                    pass
-                elif class_name == 'AssistantMessage' and hasattr(message, 'content'):
-                    # Handle AssistantMessage with content list
-                    if isinstance(message.content, list):
-                        for block in message.content:
-                            block_type = block.__class__.__name__
-                            if block_type == 'TextBlock' and hasattr(block, 'text'):
-                                response_text += block.text.strip() + "\n"
-                            elif block_type == 'ToolUseBlock':
-                                # Tool is being used
-                                tool_was_used = True
-                                self.logger.debug(f"Tool use detected: {block}")
-                    elif isinstance(message.content, str):
-                        response_text += message.content.strip() + "\n"
-                elif class_name == 'UserMessage':
-                    # UserMessage often contains tool results
-                    if hasattr(message, 'content'):
-                        if isinstance(message.content, list):
-                            for item in message.content:
-                                if hasattr(item, 'content') and isinstance(item.content, str):
-                                    # Tool result
-                                    response_text += item.content.strip() + "\n"
-                                elif isinstance(item, str):
-                                    response_text += item.strip() + "\n"
-                        elif isinstance(message.content, str):
-                            response_text += message.content.strip() + "\n"
-                elif class_name == 'TextBlock' and hasattr(message, 'text'):
-                    # Direct TextBlock
-                    response_text += message.text.strip() + "\n"
-                elif class_name == 'ResultMessage':
-                    # Skip but log
-                    self.logger.debug(f"Result message: {message}")
-                elif hasattr(message, 'text') and not class_name.startswith('Tool'):
-                    # Other messages with text
-                    response_text += message.text.strip() + "\n"
-                elif hasattr(message, 'content') and isinstance(message.content, str):
-                    # String content
-                    response_text += message.content.strip() + "\n"
-            
-            # Log and append to discussion
-            self.conversation_history.append({
-                "timestamp": self._format_timestamp(),
-                "prompt": new_prompt,
-                "response": response_text
-            })
+            # Process and yield chunks
+            async for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    text = chunk.choices[0].delta.content
+                    response_text += text
+                    yield text
             
             # Clean up response text
             response_text = response_text.strip()
+            
+            # Add to conversation history
+            self.conversation_history.append({
+                "role": "user",
+                "content": trigger_message
+            })
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": response_text
+            })
+            
+            # Limit conversation history to prevent token overflow
+            if len(self.conversation_history) > 20:
+                self.conversation_history = self.conversation_history[-20:]
+            
+            # Log the interaction
+            self.logger.info(f"Generated streaming response of {len(response_text)} characters")
             
             # Only write non-empty responses to discussion file
             if response_text:
@@ -330,17 +253,20 @@ Remember to check both the discussion file and (if relevant) the output file.
                 if self.orchestrator_callback and not skip_callback:
                     await self.orchestrator_callback(self.name, response_text)
             
-            return response_text
-            
         except Exception as e:
-            self.logger.error(f"Error continuing session: {e}")
+            self.logger.error(f"Error generating streaming response: {e}")
             raise
+    
+    async def continue_session(self, new_prompt: str) -> str:
+        """Continue the conversation with a new prompt."""
+        # Since we maintain conversation history, this is just a regular respond call
+        return await self.respond(new_prompt)
     
     def get_conversation_summary(self) -> Dict[str, Any]:
         """Get a summary of the agent's conversation history."""
         return {
             "agent_name": self.name,
-            "session_id": self.session_id,
+            "model": self.model,
             "message_count": len(self.conversation_history),
             "history": self.conversation_history
         }

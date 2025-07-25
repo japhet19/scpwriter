@@ -10,6 +10,10 @@ import sys
 import os
 from pathlib import Path
 from typing import Dict, Optional
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -63,6 +67,7 @@ async def websocket_generate(websocket: WebSocket):
             theme = params.get("theme", "")
             page_limit = params.get("pages", 3)
             protagonist_name = params.get("protagonist")
+            model = params.get("model")
             
             # Send acknowledgment
             await websocket.send_json({
@@ -74,7 +79,8 @@ async def websocket_generate(websocket: WebSocket):
             # Create story configuration
             story_config = StoryConfig(
                 page_limit=page_limit,
-                protagonist_name=protagonist_name
+                protagonist_name=protagonist_name,
+                model=model
             )
             
             # Create coordinator
@@ -88,8 +94,8 @@ async def websocket_generate(websocket: WebSocket):
                     self.coordinator = coordinator
                     # Copy necessary attributes
                     self.name = original_agent.name
-                    self.session_id = original_agent.session_id
                     self.system_prompt = original_agent.system_prompt
+                    self.model = getattr(original_agent, 'model', 'anthropic/claude-3.5-sonnet')
                     
                 async def respond(self, prompt: str, skip_callback: bool = False):
                     # Send thinking state update
@@ -113,14 +119,23 @@ async def websocket_generate(websocket: WebSocket):
                         "message": f"{self.name} is composing response..."
                     })
                     
-                    # Get response from original agent
-                    response = await self.original_agent.respond(prompt, skip_callback)
+                    # Stream response from original agent
+                    response_text = ""
+                    async for chunk in self.original_agent.respond_streaming(prompt, skip_callback):
+                        response_text += chunk
+                        # Send chunk via WebSocket
+                        await self.websocket.send_json({
+                            "type": "agent_stream_chunk",
+                            "agent": self.name,
+                            "chunk": sanitize_text(chunk),
+                            "turn": self.coordinator.turn_count
+                        })
                     
-                    # Stream the actual message
+                    # Send complete message when done
                     await self.websocket.send_json({
                         "type": "agent_message",
                         "agent": self.name,
-                        "message": sanitize_text(response),
+                        "message": sanitize_text(response_text),
                         "turn": self.coordinator.turn_count,
                         "phase": self.coordinator.current_phase
                     })
@@ -136,7 +151,7 @@ async def websocket_generate(websocket: WebSocket):
                             "message": f"Milestone reached: {milestone}"
                         })
                     
-                    return response
+                    return response_text
                 
                 def _get_thinking_activity(self):
                     activities = {

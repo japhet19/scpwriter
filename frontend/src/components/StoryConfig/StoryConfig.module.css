@@ -179,6 +179,35 @@
   flex: 1;
 }
 
+.modelSelection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+.modelInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  background: rgba(0, 255, 0, 0.05);
+  border: 1px solid rgba(0, 255, 0, 0.2);
+}
+
+.modelDescription {
+  font-size: 13px;
+  color: var(--terminal-green);
+  opacity: 0.9;
+}
+
+.modelDetails {
+  font-size: 12px;
+  color: var(--terminal-green);
+  opacity: 0.7;
+}
+
 @media (max-width: 768px) {
   .paramRow {
     flex-direction: column;

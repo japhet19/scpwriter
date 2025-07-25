@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Terminal from '@/components/Terminal/Terminal'
 import BootSequence from '@/components/BootSequence/BootSequence'
 import StoryConfig, { StoryConfiguration } from '@/components/StoryConfig/StoryConfig'
 import MessageTabs from '@/components/MessageTabs/MessageTabs'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { Howl } from 'howler'
+import { SessionMetadata, formatAgentLogs, downloadFile, generateFilename } from '@/utils/logFormatter'
 
 // Define sound effects
 const sounds = {
@@ -20,6 +21,9 @@ export default function Home() {
   const [showBoot, setShowBoot] = useState(true)
   const [currentView, setCurrentView] = useState<'config' | 'generation' | 'complete'>('config')
   const [generatedStory, setGeneratedStory] = useState<string | null>(null)
+  const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null)
+  const [showLogFormatMenu, setShowLogFormatMenu] = useState(false)
+  const sessionStartTimeRef = useRef<Date | null>(null)
   
   const {
     isConnected,
@@ -30,7 +34,9 @@ export default function Home() {
     currentAgent,
     currentPhase,
     agentStates,
-    currentActivity
+    currentActivity,
+    streamingMessages,
+    currentStreamingAgent
   } = useWebSocket()
 
   useEffect(() => {
@@ -49,23 +55,45 @@ export default function Home() {
       return
     }
     
+    // Set session metadata
+    sessionStartTimeRef.current = new Date()
+    setSessionMetadata({
+      theme: config.theme,
+      pages: config.pages,
+      protagonist: config.protagonist,
+      startTime: sessionStartTimeRef.current,
+      totalMessages: 0,
+      totalTurns: 0
+    })
+    
     generateStory({
       theme: config.theme,
       pages: config.pages,
-      protagonist: config.protagonist
+      protagonist: config.protagonist,
+      model: config.model
     })
     
     setCurrentView('generation')
     // sounds.alert.play()
   }
 
-  // Monitor for story completion
+  // Monitor for story completion and update metadata
   useEffect(() => {
     const completedMessage = messages.find(msg => msg.type === 'completed')
     if (completedMessage && completedMessage.story) {
       setGeneratedStory(completedMessage.story)
       setCurrentView('complete')
       // sounds.success.play()
+      
+      // Update final metadata
+      const agentMessages = messages.filter(msg => msg.type === 'agent_message')
+      const maxTurn = Math.max(...agentMessages.map(msg => msg.turn || 0))
+      setSessionMetadata(prev => prev ? {
+        ...prev,
+        endTime: new Date(),
+        totalMessages: agentMessages.length,
+        totalTurns: maxTurn
+      } : null)
     }
   }, [messages])
 
@@ -139,7 +167,12 @@ export default function Home() {
             <h3>└───────────────────────────────────────────────────────┘</h3>
           </div>
           
-          <MessageTabs messages={messages} currentActivity={currentActivity} />
+          <MessageTabs 
+            messages={messages} 
+            currentActivity={currentActivity}
+            streamingMessages={streamingMessages}
+            currentStreamingAgent={currentStreamingAgent}
+          />
           
           <div className="current-status">
             <span>PHASE: {currentPhase?.toUpperCase() || 'INITIALIZING'}</span>
@@ -170,24 +203,85 @@ export default function Home() {
           </div>
           
           <div className="story-actions">
-            <button 
-              className="terminal-button"
-              onClick={() => {
-                navigator.clipboard.writeText(generatedStory)
-                alert('Story copied to clipboard!')
-              }}
-            >
-              COPY TO CLIPBOARD
-            </button>
-            <button 
-              className="terminal-button"
-              onClick={() => {
-                setCurrentView('config')
-                setGeneratedStory(null)
-              }}
-            >
-              GENERATE NEW STORY
-            </button>
+            <div className="action-row">
+              <button 
+                className="terminal-button"
+                onClick={() => {
+                  navigator.clipboard.writeText(generatedStory)
+                  alert('Story copied to clipboard!')
+                }}
+              >
+                COPY STORY
+              </button>
+              <button 
+                className="terminal-button"
+                onClick={() => {
+                  const filename = generateFilename(sessionMetadata?.theme || 'unknown', 'txt').replace('_log_', '_story_')
+                  downloadFile(generatedStory, filename, 'text/plain')
+                }}
+              >
+                DOWNLOAD STORY
+              </button>
+            </div>
+            
+            <div className="action-row">
+              <div className="download-logs-container">
+                <button 
+                  className="terminal-button"
+                  onClick={() => setShowLogFormatMenu(!showLogFormatMenu)}
+                >
+                  DOWNLOAD LOGS ⬇
+                </button>
+                {showLogFormatMenu && (
+                  <div className="format-menu">
+                    <button onClick={() => {
+                      const content = formatAgentLogs(messages, sessionMetadata || undefined, { format: 'txt', includeMetadata: true })
+                      const filename = generateFilename(sessionMetadata?.theme || 'unknown', 'txt')
+                      downloadFile(content, filename, 'text/plain')
+                      setShowLogFormatMenu(false)
+                    }}>Plain Text (.txt)</button>
+                    <button onClick={() => {
+                      const content = formatAgentLogs(messages, sessionMetadata || undefined, { format: 'json', includeMetadata: true })
+                      const filename = generateFilename(sessionMetadata?.theme || 'unknown', 'json')
+                      downloadFile(content, filename, 'application/json')
+                      setShowLogFormatMenu(false)
+                    }}>JSON (.json)</button>
+                    <button onClick={() => {
+                      const content = formatAgentLogs(messages, sessionMetadata || undefined, { format: 'md', includeMetadata: true })
+                      const filename = generateFilename(sessionMetadata?.theme || 'unknown', 'md')
+                      downloadFile(content, filename, 'text/markdown')
+                      setShowLogFormatMenu(false)
+                    }}>Markdown (.md)</button>
+                  </div>
+                )}
+              </div>
+              <button 
+                className="terminal-button"
+                onClick={() => {
+                  // Download full session with story and logs
+                  const storyContent = `# SCP Foundation Document\n\n${generatedStory}\n\n---\n\n`
+                  const logsContent = formatAgentLogs(messages, sessionMetadata || undefined, { format: 'md', includeMetadata: true })
+                  const fullContent = storyContent + logsContent
+                  const filename = generateFilename(sessionMetadata?.theme || 'unknown', 'md').replace('_log_', '_session_')
+                  downloadFile(fullContent, filename, 'text/markdown')
+                }}
+              >
+                DOWNLOAD FULL SESSION
+              </button>
+            </div>
+            
+            <div className="action-row">
+              <button 
+                className="terminal-button full-width"
+                onClick={() => {
+                  setCurrentView('config')
+                  setGeneratedStory(null)
+                  setShowLogFormatMenu(false)
+                }}
+              >
+                GENERATE NEW STORY
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -325,8 +419,68 @@ export default function Home() {
         
         .story-actions {
           display: flex;
-          gap: 20px;
+          flex-direction: column;
+          gap: 15px;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+        
+        .action-row {
+          display: flex;
+          gap: 15px;
           justify-content: center;
+        }
+        
+        .action-row button {
+          flex: 1;
+        }
+        
+        .terminal-button.full-width {
+          width: 100%;
+        }
+        
+        .download-logs-container {
+          position: relative;
+          flex: 1;
+        }
+        
+        .download-logs-container .terminal-button {
+          width: 100%;
+        }
+        
+        .format-menu {
+          position: absolute;
+          bottom: 100%;
+          left: 0;
+          right: 0;
+          margin-bottom: 5px;
+          background: var(--terminal-bg);
+          border: 1px solid var(--terminal-green);
+          box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.3);
+          z-index: 10;
+        }
+        
+        .format-menu button {
+          display: block;
+          width: 100%;
+          padding: 10px 20px;
+          background: transparent;
+          border: none;
+          color: var(--terminal-green);
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 12px;
+          text-align: left;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .format-menu button:hover {
+          background: rgba(0, 255, 0, 0.1);
+          color: var(--terminal-bright-green);
+        }
+        
+        .format-menu button:not(:last-child) {
+          border-bottom: 1px solid rgba(0, 255, 0, 0.2);
         }
       `}</style>
     </Terminal>

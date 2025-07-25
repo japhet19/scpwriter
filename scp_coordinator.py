@@ -24,10 +24,11 @@ logger = logging.getLogger(__name__)
 class StoryConfig:
     """Configuration for story parameters with flexible page limits."""
     
-    def __init__(self, page_limit: int = 3, words_per_page: int = 300, protagonist_name: Optional[str] = None):
+    def __init__(self, page_limit: int = 3, words_per_page: int = 300, protagonist_name: Optional[str] = None, model: Optional[str] = None):
         self.page_limit = page_limit
         self.words_per_page = words_per_page
         self.protagonist_name = protagonist_name
+        self.model = model
         self.total_words = page_limit * words_per_page
         self.checkpoint_1_words = int(self.total_words * 0.33)
         self.checkpoint_2_words = int(self.total_words * 0.66)
@@ -329,7 +330,12 @@ IMPORTANT - Approval Process:
 1. Writer will share story drafts in the discussion file with markers
 2. Review each draft thoroughly
 3. Provide specific feedback for improvements
-4. When a draft meets your standards, explicitly state: "I APPROVE this story"
+3a. Before approving, COUNT THE WORDS in the story (excluding title)
+3b. Verify the story meets the target length of ~{self.story_config.total_words} words
+3c. If the story is significantly under target (less than 85% of requirement):
+    - DO NOT approve
+    - State: "This draft contains only [X] words, which falls short of the {self.story_config.total_words}-word target. Please expand the story to meet the length requirement."
+4. When a draft meets your standards AND length requirement, explicitly state: "I APPROVE this story"
 5. Your approval is required before the story can be finalized
 
 Human Writing Standards:
@@ -395,6 +401,7 @@ Your roles:
   * Professional presentation
   * Missing spaces after punctuation
   * Incorrect verb tenses or subject-verb disagreements
+  * Word count verification - story must be ~{self.story_config.total_words} words
 - Check for HUMAN WRITING quality:
   * Does it sound authentically human, not machine-generated?
   * Are there any remaining AI patterns:
@@ -432,6 +439,10 @@ Your roles:
   * Example: "Line 12: LLM-ism detected - 'The door wasn't just locked. It was sealed.' This dramatic revelation pattern is overused by AI. Try: 'The door was sealed tight' or describe the discovery more naturally."
   * Send the story back to [@Writer] for corrections
   * DO NOT approve until all errors are fixed AND the story sounds human
+- Check for LENGTH COMPLIANCE:
+  * Count the actual words (excluding title)
+  * If story is under 85% of target length, this is a critical issue
+  * Include in feedback: "Story contains only [X] words but requires ~{self.story_config.total_words} words"
 - Only approve with: "I APPROVE this story as Expert - technical review passed"
 
 Special Authority:
@@ -448,9 +459,9 @@ Communication:
 - Your word is final - move the project forward"""
         
         self.agents = {
-            "Writer": BaseAgent("Writer", writer_prompt),
-            "Reader": BaseAgent("Reader", reader_prompt),
-            "Expert": BaseAgent("Expert", expert_prompt)
+            "Writer": BaseAgent("Writer", writer_prompt, model=self.story_config.model),
+            "Reader": BaseAgent("Reader", reader_prompt, model=self.story_config.model),
+            "Expert": BaseAgent("Expert", expert_prompt, model=self.story_config.model)
         }
         
         logger.info("All agents initialized successfully")

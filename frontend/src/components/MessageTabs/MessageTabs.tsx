@@ -3,13 +3,16 @@
 import React, { useState, useEffect, useRef } from 'react'
 import ActivityFeed from '@/components/ActivityFeed/ActivityFeed'
 import { AgentMessage } from '@/hooks/useWebSocket'
+import styles from './MessageTabs.module.css'
 
 interface MessageTabsProps {
   messages: AgentMessage[]
   currentActivity: string
+  streamingMessages: Record<string, string>
+  currentStreamingAgent: string | null
 }
 
-export default function MessageTabs({ messages, currentActivity }: MessageTabsProps) {
+export default function MessageTabs({ messages, currentActivity, streamingMessages, currentStreamingAgent }: MessageTabsProps) {
   const [activeTab, setActiveTab] = useState<'activity' | 'fullLog'>('activity')
   const fullLogRef = useRef<HTMLDivElement>(null)
 
@@ -18,7 +21,7 @@ export default function MessageTabs({ messages, currentActivity }: MessageTabsPr
     if (activeTab === 'fullLog' && fullLogRef.current) {
       fullLogRef.current.scrollTop = fullLogRef.current.scrollHeight
     }
-  }, [activeTab, messages])
+  }, [activeTab, messages, streamingMessages])
 
   const getFullMessageContent = (msg: AgentMessage): string => {
     if (msg.type === 'agent_message' && msg.message) {
@@ -67,6 +70,18 @@ export default function MessageTabs({ messages, currentActivity }: MessageTabsPr
                 <div className="log-divider">─────────────────────────────────────</div>
               </div>
             ))}
+            {/* Show streaming message at the end */}
+            {currentStreamingAgent && streamingMessages[currentStreamingAgent] && (
+              <div className="full-log-entry streaming">
+                <div className="log-header">
+                  <span className="log-agent">[{currentStreamingAgent}]</span>
+                  <span className="log-status">◉ STREAMING</span>
+                </div>
+                <div className="log-message">
+                  <pre>{streamingMessages[currentStreamingAgent]}<span className="cursor">▊</span></pre>
+                </div>
+              </div>
+            )}
           </div>
           <h3>└──────────────────────────────────────────────────────┘</h3>
         </div>

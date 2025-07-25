@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
 
 export interface AgentMessage {
-  type: 'status' | 'agent_message' | 'completed' | 'error' | 'agent_update'
+  type: 'status' | 'agent_message' | 'completed' | 'error' | 'agent_update' | 'agent_stream_chunk'
   agent?: string
   message: string
   turn?: number
@@ -10,12 +10,14 @@ export interface AgentMessage {
   story?: string
   state?: 'thinking' | 'writing' | 'waiting'
   activity?: string
+  chunk?: string
 }
 
 export interface StoryGenerationParams {
   theme: string
   pages: number
   protagonist?: string
+  model?: string
 }
 
 export interface AgentStates {
@@ -36,6 +38,8 @@ export function useWebSocket(url: string = 'http://localhost:8000') {
     Expert: 'waiting'
   })
   const [currentActivity, setCurrentActivity] = useState<string>('')
+  const [streamingMessages, setStreamingMessages] = useState<Record<string, string>>({})
+  const [currentStreamingAgent, setCurrentStreamingAgent] = useState<string | null>(null)
   const socketRef = useRef<WebSocket | null>(null)
 
   const connect = useCallback(() => {
@@ -73,8 +77,27 @@ export function useWebSocket(url: string = 'http://localhost:8000') {
         }
       }
       
+      // Handle streaming chunks
+      if (data.type === 'agent_stream_chunk' && data.agent && data.chunk) {
+        setCurrentStreamingAgent(data.agent)
+        setStreamingMessages(prev => ({
+          ...prev,
+          [data.agent!]: (prev[data.agent!] || '') + data.chunk!
+        }))
+      }
+      
       // Reset all agents to waiting when a new one becomes active
       if (data.type === 'agent_message' && data.agent) {
+        // Clear streaming message for this agent since we now have the complete message
+        if (currentStreamingAgent === data.agent) {
+          setStreamingMessages(prev => {
+            const newState = { ...prev }
+            delete newState[data.agent!]
+            return newState
+          })
+          setCurrentStreamingAgent(null)
+        }
+        
         setAgentStates(prev => ({
           Writer: data.agent === 'Writer' ? 'writing' : 'waiting',
           Reader: data.agent === 'Reader' ? 'writing' : 'waiting',
@@ -115,6 +138,8 @@ export function useWebSocket(url: string = 'http://localhost:8000') {
     }
 
     setMessages([])
+    setStreamingMessages({})
+    setCurrentStreamingAgent(null)
     setIsGenerating(true)
     socketRef.current.send(JSON.stringify(params))
   }, [])
@@ -142,6 +167,8 @@ export function useWebSocket(url: string = 'http://localhost:8000') {
     currentAgent,
     currentPhase,
     agentStates,
-    currentActivity
+    currentActivity,
+    streamingMessages,
+    currentStreamingAgent
   }
 }
