@@ -4,6 +4,8 @@ import React, { useState } from 'react'
 import styles from './StoryConfig.module.css'
 import { MODEL_CATEGORIES, DEFAULT_MODEL, getModelById, getCostIndicator, ModelInfo } from '@/config/models'
 import TerminalDropdown from '@/components/TerminalDropdown/TerminalDropdown'
+import ThemeSelector from '@/components/ThemeSelector/ThemeSelector'
+import { useTheme } from '@/contexts/ThemeContext'
 
 interface StoryConfigProps {
   onSubmit: (config: StoryConfiguration) => void
@@ -16,6 +18,7 @@ export interface StoryConfiguration {
   horrorLevel: number
   enableRedaction: boolean
   model: string
+  uiTheme: string
 }
 
 const exampleThemes = [
@@ -34,6 +37,8 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
   const [enableRedaction, setEnableRedaction] = useState(true)
   const [isGeneratingName, setIsGeneratingName] = useState(false)
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL)
+  const { themeId } = useTheme()
+  const [selectedTheme, setSelectedTheme] = useState(themeId)
 
   const generateProtagonistName = () => {
     setIsGeneratingName(true)
@@ -60,7 +65,8 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
       protagonist: protagonist.trim() || undefined,
       horrorLevel,
       enableRedaction,
-      model: selectedModel
+      model: selectedModel,
+      uiTheme: selectedTheme
     })
   }
 
@@ -171,6 +177,13 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
               })()}
             </div>
           </div>
+        </div>
+
+        <div className={styles.formGroup}>
+          <ThemeSelector 
+            storyTheme={theme}
+            onThemeChange={setSelectedTheme}
+          />
         </div>
 
         <div className={styles.formGroup}>

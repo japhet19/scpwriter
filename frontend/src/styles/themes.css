@@ -1,0 +1,207 @@
+/* Theme-specific styles and effects */
+
+/* CSS Variables that themes will override */
+:root {
+  --font-main: 'Share Tech Mono', monospace;
+  --font-accent: 'VT323', monospace;
+}
+
+/* Global font usage */
+body {
+  font-family: var(--font-main), monospace;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-accent), var(--font-main), monospace;
+}
+
+/* Theme transition effect */
+.theme-transitioning {
+  animation: theme-fade 0.6s ease-in-out;
+}
+
+@keyframes theme-fade {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Fantasy Theme Effects */
+.theme-fantasy .crt-container::before {
+  display: none; /* Remove scanlines for fantasy */
+}
+
+.theme-fantasy .sparkle {
+  position: absolute;
+  animation: sparkle 2s linear infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.theme-fantasy .magic-glow {
+  animation: magic-glow 3s ease-in-out infinite;
+}
+
+@keyframes magic-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--terminal-green); }
+  50% { box-shadow: 0 0 40px var(--terminal-green), 0 0 60px var(--terminal-secondary); }
+}
+
+/* Cyberpunk Theme Effects */
+.theme-cyberpunk .neon-glow {
+  text-shadow: 
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    0 0 30px currentColor,
+    0 0 40px currentColor;
+}
+
+.theme-cyberpunk .digital-rain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.1;
+  z-index: 1;
+}
+
+.theme-cyberpunk .hologram {
+  animation: hologram 0.1s infinite;
+}
+
+@keyframes hologram {
+  0% { opacity: 1; transform: translateX(0); }
+  33% { opacity: 0.9; transform: translateX(-1px); }
+  66% { opacity: 0.9; transform: translateX(1px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* Romance Theme Effects */
+.theme-romance .crt-container::before {
+  display: none; /* Remove scanlines for romance */
+}
+
+.theme-romance .heart {
+  display: inline-block;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  10%, 30% { transform: scale(1.1); }
+  20% { transform: scale(0.95); }
+}
+
+.theme-romance .soft-glow {
+  box-shadow: 
+    0 0 20px rgba(255, 182, 193, 0.5),
+    inset 0 0 20px rgba(255, 182, 193, 0.1);
+}
+
+/* Noir Theme Effects */
+.theme-noir .film-grain::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.15;
+  z-index: 1;
+  background-image: url('data:image/svg+xml,%3Csvg width="200" height="200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="grain"%3E%3CfeTurbulence baseFrequency="0.9"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23grain)"/%3E%3C/svg%3E');
+}
+
+.theme-noir .typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typewriter 3s steps(40, end);
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Sci-Fi Theme Effects */
+.theme-scifi .crt-container::before {
+  background: linear-gradient(
+    rgba(0, 229, 255, 0) 50%,
+    rgba(0, 229, 255, 0.05) 50%
+  );
+  background-size: 100% 4px;
+}
+
+.theme-scifi .hologram {
+  animation: scifi-hologram 2s ease-in-out infinite;
+}
+
+@keyframes scifi-hologram {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+.theme-scifi .pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Background Styles */
+.background-grid {
+  background-image: 
+    linear-gradient(var(--terminal-green) 1px, transparent 1px),
+    linear-gradient(90deg, var(--terminal-green) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: -1px -1px;
+  opacity: 0.05;
+}
+
+.background-forest {
+  /* Will be implemented with a React component for animated fireflies */
+  background: 
+    radial-gradient(ellipse at top, #2a1f3f 0%, var(--terminal-bg) 60%),
+    radial-gradient(ellipse at bottom, #1a0f1f 0%, var(--terminal-bg) 60%);
+}
+
+.background-city-lights {
+  /* Will be implemented with a React component for animated neon city */
+  background: 
+    linear-gradient(180deg, #0a0014 0%, #1a0024 50%, #0a0014 100%);
+}
+
+.background-rose-garden {
+  background: 
+    radial-gradient(ellipse at center, #3d2f3f 0%, var(--terminal-bg) 70%);
+}
+
+.background-rain-window {
+  /* Will be implemented with a React component for rain effect */
+  background: 
+    linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
+}
+
+.background-starfield {
+  /* Will be implemented with a React component for animated stars */
+  background: 
+    radial-gradient(ellipse at center, #000814 0%, #000000 100%);
+}
+
+/* Mobile Responsiveness for Theme Effects */
+@media (max-width: 768px) {
+  .digital-rain,
+  .film-grain::after {
+    display: none; /* Disable heavy effects on mobile */
+  }
+  
+  .neon-glow {
+    text-shadow: 0 0 10px currentColor; /* Reduce glow on mobile */
+  }
+}

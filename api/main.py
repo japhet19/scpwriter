@@ -68,6 +68,7 @@ async def websocket_generate(websocket: WebSocket):
             page_limit = params.get("pages", 3)
             protagonist_name = params.get("protagonist")
             model = params.get("model")
+            ui_theme = params.get("uiTheme", "scp")
             
             # Send acknowledgment
             await websocket.send_json({
@@ -80,7 +81,8 @@ async def websocket_generate(websocket: WebSocket):
             story_config = StoryConfig(
                 page_limit=page_limit,
                 protagonist_name=protagonist_name,
-                model=model
+                model=model,
+                theme=ui_theme
             )
             
             # Create coordinator

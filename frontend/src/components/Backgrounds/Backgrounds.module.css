@@ -1,0 +1,97 @@
+.backgroundCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.backgroundContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Hearts for romance theme */
+.heart {
+  position: absolute;
+  color: rgba(255, 182, 193, 0.3);
+  animation: float-up 10s linear infinite;
+  font-size: 20px;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Fireflies for fantasy theme */
+.firefly {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #FFD700;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #FFD700;
+  animation: firefly-move 20s infinite;
+}
+
+@keyframes firefly-move {
+  0%, 100% {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  10%, 90% {
+    opacity: 1;
+  }
+  25% {
+    transform: translate(100px, -50px);
+  }
+  50% {
+    transform: translate(-50px, -100px);
+  }
+  75% {
+    transform: translate(50px, 50px);
+  }
+}
+
+/* Digital rain for cyberpunk */
+.digitalRainColumn {
+  position: absolute;
+  color: #00ffff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  line-height: 1.2;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  opacity: 0.8;
+}
+
+.digitalRainChar {
+  display: block;
+  animation: fade-char 2s linear infinite;
+}
+
+@keyframes fade-char {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.8; }
+}

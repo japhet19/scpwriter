@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import styles from './Terminal.module.css'
+import { useTheme } from '@/contexts/ThemeContext'
 
 interface TerminalProps {
   children: React.ReactNode
@@ -9,7 +10,9 @@ interface TerminalProps {
   showHeader?: boolean
 }
 
-export default function Terminal({ children, title = 'SCP FOUNDATION TERMINAL', showHeader = true }: TerminalProps) {
+export default function Terminal({ children, title, showHeader = true }: TerminalProps) {
+  const { currentTheme } = useTheme()
+  const displayTitle = title || currentTheme.ui.mainTitle
   const [time, setTime] = useState('')
   const [isFlickering, setIsFlickering] = useState(false)
 
@@ -39,10 +42,10 @@ export default function Terminal({ children, title = 'SCP FOUNDATION TERMINAL', 
       <div className="terminal-window">
         {showHeader && (
           <div className="terminal-header">
-            <div className="terminal-title text-glow">{title}</div>
+            <div className="terminal-title text-glow">{displayTitle}</div>
             <div className="terminal-status">
-              <span>SECURE CONNECTION</span>
-              <span className="alert-amber">LVL-3</span>
+              <span>{currentTheme.ui.statusText}</span>
+              <span className="alert-amber">{currentTheme.id === 'scp' ? 'LVL-3' : 'ACTIVE'}</span>
               <span>{time} UTC</span>
             </div>
           </div>

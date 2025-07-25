@@ -8,6 +8,8 @@ import MessageTabs from '@/components/MessageTabs/MessageTabs'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { Howl } from 'howler'
 import { SessionMetadata, formatAgentLogs, downloadFile, generateFilename } from '@/utils/logFormatter'
+import BackgroundSwitcher from '@/components/Backgrounds/BackgroundSwitcher'
+import { useTheme } from '@/contexts/ThemeContext'
 
 // Define sound effects
 const sounds = {
@@ -24,6 +26,7 @@ export default function Home() {
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null)
   const [showLogFormatMenu, setShowLogFormatMenu] = useState(false)
   const sessionStartTimeRef = useRef<Date | null>(null)
+  const { currentTheme } = useTheme()
   
   const {
     isConnected,
@@ -106,14 +109,16 @@ export default function Home() {
   }
 
   return (
-    <Terminal>
-      {currentView === 'config' && (
-        <StoryConfig onSubmit={handleStorySubmit} />
-      )}
+    <>
+      <BackgroundSwitcher />
+      <Terminal>
+        {currentView === 'config' && (
+          <StoryConfig onSubmit={handleStorySubmit} />
+        )}
       
       {currentView === 'generation' && (
         <div className="generation-view">
-          <h2>GENERATING ANOMALY DOCUMENTATION...</h2>
+          <h2>GENERATING {currentTheme.id === 'scp' ? 'ANOMALY DOCUMENTATION' : currentTheme.id === 'fantasy' ? 'MAGICAL TALE' : currentTheme.id === 'romance' ? 'LOVE STORY' : currentTheme.id === 'cyberpunk' ? 'DATA STREAM' : currentTheme.id === 'noir' ? 'CASE FILE' : 'MISSION LOG'}...</h2>
           
           <div className="agent-status">
             <h3>┌─── AGENT STATUS MONITOR ──────────────────────────────┐</h3>
@@ -125,7 +130,7 @@ export default function Home() {
                     <br />│ {agentStates.Writer === 'thinking' ? '◌◌◌' : agentStates.Writer === 'writing' ? '▓▓▓' : '   '} │
                     <br />╰─────╯
                   </div>
-                  <div className="agent-name">WRITER</div>
+                  <div className="agent-name">{currentTheme.agents.writer}</div>
                   <div className="agent-status">
                     {agentStates.Writer === 'thinking' && <span>ANALYZING<span className="dots"><span>.</span><span>.</span><span>.</span></span></span>}
                     {agentStates.Writer === 'writing' && <span>COMPOSING<span className="cursor-blink">▊</span></span>}
@@ -140,7 +145,7 @@ export default function Home() {
                     <br />│ {agentStates.Reader === 'thinking' ? '◌◌◌' : agentStates.Reader === 'writing' ? '▓▓▓' : '   '} │
                     <br />╰─────╯
                   </div>
-                  <div className="agent-name">READER</div>
+                  <div className="agent-name">{currentTheme.agents.reader}</div>
                   <div className="agent-status">
                     {agentStates.Reader === 'thinking' && <span>REVIEWING<span className="dots"><span>.</span><span>.</span><span>.</span></span></span>}
                     {agentStates.Reader === 'writing' && <span>FEEDBACK<span className="cursor-blink">▊</span></span>}
@@ -155,7 +160,7 @@ export default function Home() {
                     <br />│ {agentStates.Expert === 'thinking' ? '◌◌◌' : agentStates.Expert === 'writing' ? '▓▓▓' : '   '} │
                     <br />╰─────╯
                   </div>
-                  <div className="agent-name">EXPERT</div>
+                  <div className="agent-name">{currentTheme.agents.expert}</div>
                   <div className="agent-status">
                     {agentStates.Expert === 'thinking' && <span>ANALYZING<span className="dots"><span>.</span><span>.</span><span>.</span></span></span>}
                     {agentStates.Expert === 'writing' && <span>ADVISING<span className="cursor-blink">▊</span></span>}
@@ -483,6 +488,7 @@ export default function Home() {
           border-bottom: 1px solid rgba(0, 255, 0, 0.2);
         }
       `}</style>
-    </Terminal>
+      </Terminal>
+    </>
   )
 }

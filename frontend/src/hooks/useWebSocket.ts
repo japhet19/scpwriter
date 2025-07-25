@@ -18,6 +18,7 @@ export interface StoryGenerationParams {
   pages: number
   protagonist?: string
   model?: string
+  uiTheme?: string
 }
 
 export interface AgentStates {

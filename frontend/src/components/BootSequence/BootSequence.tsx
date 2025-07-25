@@ -2,26 +2,25 @@
 
 import React, { useState, useEffect } from 'react'
 import styles from './BootSequence.module.css'
+import { useTheme } from '@/contexts/ThemeContext'
 
 interface BootSequenceProps {
   onComplete: () => void
 }
 
-const bootMessages = [
-  { text: 'INITIALIZING SCP FOUNDATION SYSTEMS...', delay: 0 },
-  { text: 'LOADING KERNEL... ', delay: 500, progress: true },
-  { text: 'VERIFYING CLEARANCE...', delay: 1500 },
-  { text: 'ACCESS LEVEL: RESEARCHER', delay: 2000 },
-  { text: '', delay: 2200 },
-  { text: 'WELCOME TO ANOMALY NARRATIVE GENERATION SYSTEM (ANGS)', delay: 2400 },
-  { text: 'TYPE \'help\' FOR COMMANDS OR CLICK \'BEGIN\' TO START', delay: 2800 }
-]
-
 export default function BootSequence({ onComplete }: BootSequenceProps) {
+  const { currentTheme } = useTheme()
   const [currentLine, setCurrentLine] = useState(0)
   const [showProgress, setShowProgress] = useState(false)
   const [progress, setProgress] = useState(0)
   const [displayedMessages, setDisplayedMessages] = useState<string[]>([])
+
+  // Create boot messages from theme
+  const bootMessages = currentTheme.ui.bootMessages.map((text, index) => ({
+    text,
+    delay: index * 400,
+    progress: index === 1 // Show progress on second message
+  }))
 
   useEffect(() => {
     if (currentLine < bootMessages.length) {
@@ -57,13 +56,27 @@ export default function BootSequence({ onComplete }: BootSequenceProps) {
   return (
     <div className={styles.bootSequence}>
       <pre className={styles.asciiLogo}>
-{`   ███████╗ ██████╗██████╗ 
+{currentTheme.id === 'scp' ? 
+`   ███████╗ ██████╗██████╗ 
    ██╔════╝██╔════╝██╔══██╗
    ███████╗██║     ██████╔╝
    ╚════██║██║     ██╔═══╝ 
    ███████║╚██████╗██║     
    ╚══════╝ ╚═════╝╚═╝     
-   SECURE. CONTAIN. PROTECT.`}
+   SECURE. CONTAIN. PROTECT.` :
+currentTheme.id === 'fantasy' ?
+`   ✦･ﾟ: *✦･ﾟ:* 
+   ENCHANTED
+      TALES
+   *:･ﾟ✦*:･ﾟ✦` :
+currentTheme.id === 'cyberpunk' ?
+`   ▐▓█▀▀▀▀▀▀▀▀▀█▓▌
+   ▐▓█ NEURAL █▓▌
+   ▐▓█ NETWORK █▓▌
+   ▐▓█▄▄▄▄▄▄▄▄▄█▓▌` :
+`   ${currentTheme.name.toUpperCase()}
+   ${currentTheme.ui.tagline}`
+}
       </pre>
       <div className={styles.bootMessages}>
         {displayedMessages.map((msg, idx) => (

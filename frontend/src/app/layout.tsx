@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import '@/styles/terminal.css'
+import '@/styles/themes.css'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SCP Writer - Anomaly Narrative Generation System",
-  description: "Create SCP stories using multiple AI agents",
+  title: "Story Writer - Multi-Genre AI Story Creation",
+  description: "Create stories in multiple genres using AI agents",
 };
 
 export default function RootLayout({
@@ -28,7 +30,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
