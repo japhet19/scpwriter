@@ -79,6 +79,14 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
         </div>
 
         <div className={styles.formGroup}>
+          <label className={styles.label}>▼ STORY THEME SELECTION</label>
+          <ThemeSelector 
+            storyTheme={theme}
+            onThemeChange={setSelectedTheme}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
           <label className={styles.label}>▼ {selectedThemeConfig.formConfig.descriptionLabel}</label>
           <textarea
             className="terminal-input"
@@ -173,13 +181,6 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
               })()}
             </div>
           </div>
-        </div>
-
-        <div className={styles.formGroup}>
-          <ThemeSelector 
-            storyTheme={theme}
-            onThemeChange={setSelectedTheme}
-          />
         </div>
 
         <div className={styles.formGroup}>
