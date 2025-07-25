@@ -21,7 +21,7 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
     description: "Top-tier models for the best creative writing quality",
     models: [
       {
-        id: "anthropic/claude-opus-4-20250514",
+        id: "anthropic/claude-opus-4",
         name: "Claude 4 Opus",
         provider: "Anthropic",
         description: "Most powerful Claude model - exceptional creative writing",
@@ -31,7 +31,7 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         available: true
       },
       {
-        id: "anthropic/claude-sonnet-4-20250514",
+        id: "anthropic/claude-sonnet-4",
         name: "Claude 4 Sonnet",
         provider: "Anthropic",
         description: "Balanced performance and cost - excellent for stories",

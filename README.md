@@ -143,7 +143,7 @@ OPENROUTER_API_KEY=your-api-key-here
 
 The default model is Gemini 2.5 Flash for cost-effectiveness. To change:
 ```env
-OPENROUTER_MODEL=anthropic/claude-opus-4-20250514
+OPENROUTER_MODEL=anthropic/claude-opus-4
 ```
 
 ## 📁 Project Structure
