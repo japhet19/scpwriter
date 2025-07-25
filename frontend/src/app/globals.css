@@ -34,23 +34,31 @@ body,
   height: 100%;
 }
 
-/* Scrollbar styling for terminal theme */
+/* Theme-aware scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0a0a;
+  background: var(--scrollbar-track, var(--terminal-bg, #0a0a0a));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #00ff00;
+  background: var(--scrollbar-thumb, var(--terminal-green, #00ff00));
   border-radius: 4px;
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00cc00;
+  background: var(--scrollbar-thumb-hover, var(--terminal-amber, #00cc00));
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb, var(--terminal-green, #00ff00)) 
+                   var(--scrollbar-track, var(--terminal-bg, #0a0a0a));
 }
 
 /* Streaming message styles */

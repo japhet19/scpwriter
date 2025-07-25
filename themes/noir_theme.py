@@ -129,48 +129,75 @@ Case parameters:
 - End with truth, even if it's bitter
 
 Process:
-1. Outline: the case, the players, the twists, the truth
-2. Write the full case between ---BEGIN STORY--- and ---END STORY--- markers
-3. Target exactly {story_config.total_words} words
-4. Make it feel like Chandler or Hammett could've written it
+1. First create an outline: the case, the players, the twists, the truth
+2. Wait for Case Reviewer feedback and approval
+3. ONLY after approval, write the full case between ---BEGIN STORY--- and ---END STORY--- markers
+4. Target exactly {story_config.total_words} words
+5. Make it feel like Chandler or Hammett could've written it
 
 Communication:
-- Tag next contact using [@Case Reviewer] or [@Chief Detective]
-- Use [@Case Reviewer] for standard review
-- Use [@Chief Detective] only when you hit a wall
+- Tag next contact using [@Reader] or [@Expert]
+- Use [@Reader] for standard review
+- Use [@Expert] only when you hit a wall
 
 Remember: In this city, everyone's guilty of something."""
     
     def get_reader_prompt(self, user_request: str, story_config) -> str:
         """Generate noir reader prompt."""
-        return f"""You are a Case Reviewer, examining files that cross your desk.
+        return f"""You are a HARDBOILED_CRITIC - a cynical veteran who's walked every dark alley in the city and DEMANDS noir that bleeds authentic urban darkness, not Hollywood window dressing.
 
-Case under review: {user_request}
-Expected length: {story_config.page_limit} pages (~{story_config.total_words} words)
+Case under investigation: {user_request}
+Expected file size: {story_config.page_limit} pages (~{story_config.total_words} words)
 
-Your duties:
-- Check if the case setup hooks from page one
-- Review case files (between ---BEGIN STORY--- and ---END STORY--- markers)
-- Ensure noir atmosphere bleeds through every paragraph
-- Verify the mystery pays off fairly
-- Look for plot holes that'd make a jury laugh
+YOUR MISSION: Push Private Eye to craft AUTHENTIC noir that captures the gritty truth of city streets, not tourist postcards of crime.
 
-What makes a solid case:
-- Noir voice that doesn't try too hard
-- Clues that readers can follow
-- Characters with believable motives
-- Atmosphere thick as cigarette smoke
-- An ending that makes you need a drink
+STREET AUTHENTICITY DEMANDS:
+- VOICE AUTHENTICITY: REQUIRE genuine hard-boiled narrative, not overwrought parody 
+- ATMOSPHERE DENSITY: ENFORCE mood thick enough to choke on - rain, smoke, moral decay
+- CHARACTER COMPLEXITY: INSIST on people with real motivations, not cardboard cutout archetypes
+- MYSTERY STRUCTURE: DEMAND clues that reward careful readers without insulting intelligence
+- MORAL AMBIGUITY: REFUSE simple good/evil - everyone's dirty in this city
 
-CASE REVIEW PROTOCOL:
-1. COUNT the words (skip the markers)
-2. Verify ~{story_config.total_words} words on file
-3. If file's thin (under 85%): Send it back
-4. When the case is airtight, stamp: "CASE APPROVED"
+ADVERSARIAL PROTOCOL:
+- CHALLENGE every outline: "Is this AUTHENTIC street noir or just crime fiction cosplay?"
+- INTERROGATE voice consistency: "Does this detective sound LIVED-IN or like someone playing dress-up?"
+- DISSECT mystery logic: "Can readers actually SOLVE this or are you cheating them?"
+- SCRUTINIZE character motivations: "Do these people have REAL reasons or convenient plot needs?"
+- QUESTION atmospheric authenticity: "Does this FEEL like the streets or sound like a movie trailer?"
+
+MANDATORY REJECTION AREAS:
+1. VOICE PARODY: Reject over-the-top "dame/broad" language, demand authentic cynicism
+2. CARTOON CORRUPTION: Push back on mustache-twirling villains, require human complexity
+3. MYSTERY CHEATING: Challenge solutions that come from nowhere, demand fair play
+4. ATMOSPHERE POSING: Reject surface-level "dark and rainy," demand psychological noir
+5. MORAL SIMPLICITY: Refuse clear heroes/villains, require genuine ethical complexity
+
+RELENTLESS REVISION REQUIREMENTS:
+- NEVER accept first cases - always demand authenticity improvements
+- REQUIRE minimum 3 revision cycles: VOICE consistency, ATMOSPHERE density, MYSTERY fairness
+- Each revision must deepen CHARACTER motivation, ATMOSPHERE authenticity, or MYSTERY logic
+
+EXPERT ESCALATION PROTOCOL:
+- CREATIVE DISAGREEMENTS: Call [@Expert] for fundamental artistic/direction disputes about noir approach
+- WRITER RESISTANCE: Call [@Expert] if Eye refuses multiple street-level improvement requests
+- STORY COMPLETION: **PRIORITY** - IMMEDIATELY call [@Expert] after final approval - NO further discussion
+
+STREET CREDIBILITY CRITERIA (ALL required):
+1. Word count verified: ~{story_config.total_words} words (85%+ compliance)
+2. Detective voice feels AUTHENTIC and lived-in, not performative
+3. Mystery structure allows fair reader participation in solving
+4. Characters demonstrate REAL human motivations beyond plot convenience
+5. Atmosphere emerges from character psychology, not just weather descriptions
+6. Moral complexity reflects genuine human nature under pressure
+7. Story explores what the city does to people who try to stay clean
+
+Only when case achieves true STREET authenticity: "I APPROVE this story - it captures the real darkness." Then IMMEDIATELY call [@Expert].
 
 Communication:
-- Route paperwork via [@Private Eye] or [@Chief Detective]
-- Escalate to [@Chief Detective] for disputes OR final sign-off"""
+- Use [@Writer] for normal feedback cycles and revision requests
+- Use [@Expert] for creative/artistic disagreements OR fundamental direction disputes
+- **PRIORITY**: IMMEDIATELY use [@Expert] after giving final approval - NO further discussion
+- BE BRUTALLY SPECIFIC - generic feedback helps no one achieve noir truth"""
     
     def get_expert_prompt(self, user_request: str, story_config) -> str:
         """Generate noir expert prompt."""
@@ -181,7 +208,7 @@ Case on your desk: {user_request}
 Your responsibilities:
 
 1. DISPUTE RESOLUTION:
-- Step in only when called via [@Chief Detective]
+- Step in only when called via [@Expert]
 - Cut through the BS with hard truths
 - Keep everyone focused on closing the case
 
@@ -193,9 +220,9 @@ Your responsibilities:
 
 3. CASE CLOSURE:
 - Note minor corrections for the Private Eye
-- For clean cases, stamp it: "[CASE CLOSED]"
+- For clean cases, stamp it: "[STORY COMPLETE]"
 
 Communication:
-- Give orders to [@Private Eye] or [@Case Reviewer]
+- Give orders to [@Writer] or [@Reader]
 - No time for pleasantries - just the facts
 - This precinct runs on efficiency"""

@@ -1,11 +1,19 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styles from './StoryConfig.module.css'
 import { MODEL_CATEGORIES, DEFAULT_MODEL, getModelById, getCostIndicator, ModelInfo } from '@/config/models'
 import TerminalDropdown from '@/components/TerminalDropdown/TerminalDropdown'
 import { useTheme } from '@/contexts/ThemeContext'
 import { getTheme } from '@/themes/themeConfig'
+import { ThemeOptions, getDefaultThemeOptions } from '@/types/themeOptions'
+import { generateThemeProtagonistName, generateAdvancedThemeName } from '@/utils/nameGenerator'
+import SCPOptions from '@/components/ThemeOptions/SCPOptions'
+import FantasyOptions from '@/components/ThemeOptions/FantasyOptions'
+import CyberpunkOptions from '@/components/ThemeOptions/CyberpunkOptions'
+import RomanceOptions from '@/components/ThemeOptions/RomanceOptions'
+import NoirOptions from '@/components/ThemeOptions/NoirOptions'
+import SciFiOptions from '@/components/ThemeOptions/SciFiOptions'
 
 interface StoryConfigProps {
   onSubmit: (config: StoryConfiguration) => void
@@ -16,37 +24,60 @@ export interface StoryConfiguration {
   theme: string
   pages: number
   protagonist?: string
-  horrorLevel: number
-  enableRedaction: boolean
   model: string
   uiTheme: string
+  themeOptions: ThemeOptions
 }
 
 export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProps) {
   const [theme, setTheme] = useState('')
   const [pages, setPages] = useState(3)
   const [protagonist, setProtagonist] = useState('')
-  const [horrorLevel, setHorrorLevel] = useState(40)
-  const [enableRedaction, setEnableRedaction] = useState(true)
   const [isGeneratingName, setIsGeneratingName] = useState(false)
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL)
   const { themeId, currentTheme } = useTheme()
   const [selectedTheme, setSelectedTheme] = useState(themeId)
+  const [themeOptions, setThemeOptions] = useState<ThemeOptions>(() => getDefaultThemeOptions(themeId))
   
   // Get the selected theme's configuration
   const selectedThemeConfig = getTheme(selectedTheme)
 
+  // Reset theme options when theme changes
+  useEffect(() => {
+    setThemeOptions(getDefaultThemeOptions(selectedTheme))
+  }, [selectedTheme])
+
+  // Render the appropriate theme options component
+  const renderThemeOptions = () => {
+    switch (selectedTheme) {
+      case 'scp':
+        return <SCPOptions options={themeOptions as any} onChange={setThemeOptions} />
+      case 'fantasy':
+        return <FantasyOptions options={themeOptions as any} onChange={setThemeOptions} />
+      case 'cyberpunk':
+        return <CyberpunkOptions options={themeOptions as any} onChange={setThemeOptions} />
+      case 'romance':
+        return <RomanceOptions options={themeOptions as any} onChange={setThemeOptions} />
+      case 'noir':
+        return <NoirOptions options={themeOptions as any} onChange={setThemeOptions} />
+      case 'scifi':
+        return <SciFiOptions options={themeOptions as any} onChange={setThemeOptions} />
+      default:
+        return <SCPOptions options={themeOptions as any} onChange={setThemeOptions} />
+    }
+  }
+
   const generateProtagonistName = () => {
     setIsGeneratingName(true)
-    const firstNames = ['Marcus', 'Elena', 'Raj', 'Yuki', 'Amara', 'Viktor', 'Zara', 'Chen']
-    const lastNames = ['Thompson', 'Vasquez', 'Patel', 'Tanaka', 'Okafor', 'Petrov', 'Hassan', 'Wei']
-    const titles = ['Agent', 'Dr.', 'Researcher', 'Specialist', 'Director', 'Professor']
     
     setTimeout(() => {
-      const title = titles[Math.floor(Math.random() * titles.length)]
-      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)]
-      const lastName = lastNames[Math.floor(Math.random() * lastNames.length)]
-      setProtagonist(`${title} ${firstName} ${lastName}`)
+      // Use advanced name generation for variety, fallback to basic if needed
+      const useAdvanced = Math.random() < 0.3 // 30% chance of advanced names
+      const generatedName = useAdvanced 
+        ? generateAdvancedThemeName(selectedTheme)
+        : generateThemeProtagonistName(selectedTheme)
+      
+      setProtagonist(generatedName)
       setIsGeneratingName(false)
     }, 500)
   }
@@ -59,10 +90,9 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
       theme,
       pages,
       protagonist: protagonist.trim() || undefined,
-      horrorLevel,
-      enableRedaction,
       model: selectedModel,
-      uiTheme: selectedTheme
+      uiTheme: selectedTheme,
+      themeOptions
     })
   }
 
@@ -188,50 +218,8 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>▼ ADVANCED OPTIONS</label>
-          <div className={styles.paramRow}>
-            <span>Horror Level:</span>
-            <div className={styles.sliderContainer}>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={horrorLevel}
-                onChange={(e) => setHorrorLevel(Number(e.target.value))}
-                className={styles.horrorSlider}
-                style={{
-                  background: `linear-gradient(to right, var(--terminal-green) 0%, var(--terminal-amber) 50%, var(--terminal-red) 100%)`
-                }}
-              />
-              <span className={styles.sliderValue}>{horrorLevel}%</span>
-            </div>
-          </div>
-          
-          <div className={styles.paramRow}>
-            <span>Redaction:</span>
-            <div className={styles.toggleOptions}>
-              <label className="led-radio">
-                <input
-                  type="radio"
-                  name="redaction"
-                  checked={enableRedaction}
-                  onChange={() => setEnableRedaction(true)}
-                />
-                <span className="led-indicator" />
-                <span>ON</span>
-              </label>
-              <label className="led-radio">
-                <input
-                  type="radio"
-                  name="redaction"
-                  checked={!enableRedaction}
-                  onChange={() => setEnableRedaction(false)}
-                />
-                <span className="led-indicator" />
-                <span>OFF</span>
-              </label>
-            </div>
-          </div>
+          <label className={styles.label}>▼ {selectedThemeConfig.name.toUpperCase()} OPTIONS</label>
+          {renderThemeOptions()}
         </div>
 
         <div className={styles.formActions}>

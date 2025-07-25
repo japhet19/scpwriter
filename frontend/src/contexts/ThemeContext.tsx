@@ -38,6 +38,11 @@ export function ThemeProvider({ children, initialTheme = 'scp' }: ThemeProviderP
     root.style.setProperty('--terminal-bg-light', theme.ui.colors.backgroundLight)
     root.style.setProperty('--crt-green', `${theme.ui.colors.primary}1a`) // 10% opacity
     
+    // Set scrollbar theme colors
+    root.style.setProperty('--scrollbar-thumb', theme.ui.colors.primary)
+    root.style.setProperty('--scrollbar-thumb-hover', theme.ui.colors.secondary)
+    root.style.setProperty('--scrollbar-track', theme.ui.colors.background)
+    
     // Set fonts
     root.style.setProperty('--font-main', theme.ui.fonts.main)
     root.style.setProperty('--font-accent', theme.ui.fonts.accent)

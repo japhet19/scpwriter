@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { io, Socket } from 'socket.io-client'
+import { ThemeOptions } from '@/types/themeOptions'
 
 export interface AgentMessage {
   type: 'status' | 'agent_message' | 'completed' | 'error' | 'agent_update' | 'agent_stream_chunk'
@@ -19,6 +20,7 @@ export interface StoryGenerationParams {
   protagonist?: string
   model?: string
   uiTheme?: string
+  themeOptions?: ThemeOptions
 }
 
 export interface AgentStates {

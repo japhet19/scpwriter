@@ -104,12 +104,17 @@
 }
 
 .menuContent::-webkit-scrollbar-track {
-  background: rgba(0, 255, 0, 0.05);
+  background: var(--scrollbar-track, var(--terminal-bg, #0a0a0a));
 }
 
 .menuContent::-webkit-scrollbar-thumb {
-  background: var(--terminal-green);
+  background: var(--scrollbar-thumb, var(--terminal-green, #00ff00));
   border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.menuContent::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover, var(--terminal-amber, #00cc00));
 }
 
 .category {

@@ -25,12 +25,13 @@ logger = logging.getLogger(__name__)
 class StoryConfig:
     """Configuration for story parameters with flexible page limits."""
     
-    def __init__(self, page_limit: int = 3, words_per_page: int = 300, protagonist_name: Optional[str] = None, model: Optional[str] = None, theme: Optional[str] = None):
+    def __init__(self, page_limit: int = 3, words_per_page: int = 300, protagonist_name: Optional[str] = None, model: Optional[str] = None, theme: Optional[str] = None, theme_options: Optional[Dict] = None):
         self.page_limit = page_limit
         self.words_per_page = words_per_page
         self.protagonist_name = protagonist_name
         self.model = model
         self.theme = theme or "scp"
+        self.theme_options = theme_options or {}
         self.total_words = page_limit * words_per_page
         self.checkpoint_1_words = int(self.total_words * 0.33)
         self.checkpoint_2_words = int(self.total_words * 0.66)

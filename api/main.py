@@ -24,6 +24,30 @@ from utils.text_sanitizer import sanitize_text
 # Store active websocket connections
 active_connections: Dict[str, WebSocket] = {}
 
+def map_agent_name_to_key(agent_name: str, coordinator) -> str:
+    """Map theme-specific agent names to standard keys for frontend compatibility."""
+    # Get the theme-specific agent names from the coordinator
+    writer_name = coordinator.theme.writer.name
+    reader_name = coordinator.theme.reader.name 
+    expert_name = coordinator.theme.expert.name
+    
+    # Map to standard keys
+    if agent_name == writer_name:
+        mapped_key = "Writer"
+    elif agent_name == reader_name:
+        mapped_key = "Reader"  
+    elif agent_name == expert_name:
+        mapped_key = "Expert"
+    else:
+        # Fallback for unknown agent names
+        mapped_key = agent_name
+    
+    # Debug logging
+    if mapped_key != agent_name:
+        print(f"🔄 AGENT MAPPING: '{agent_name}' → '{mapped_key}'")
+    
+    return mapped_key
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -69,6 +93,11 @@ async def websocket_generate(websocket: WebSocket):
             protagonist_name = params.get("protagonist")
             model = params.get("model")
             ui_theme = params.get("uiTheme", "scp")
+            theme_options = params.get("themeOptions", {})
+            
+            # Debug logging for theme loading
+            print(f"🎭 THEME DEBUG: Received uiTheme='{ui_theme}' from frontend")
+            print(f"📊 THEME OPTIONS: {theme_options}")
             
             # Send acknowledgment
             await websocket.send_json({
@@ -82,11 +111,16 @@ async def websocket_generate(websocket: WebSocket):
                 page_limit=page_limit,
                 protagonist_name=protagonist_name,
                 model=model,
-                theme=ui_theme
+                theme=ui_theme,
+                theme_options=theme_options
             )
             
             # Create coordinator
             coordinator = SCPCoordinator(story_config)
+            
+            # Debug logging for loaded theme
+            print(f"🎯 LOADED THEME: {coordinator.theme.name} (ID: {coordinator.theme.id})")
+            print(f"👥 AGENT NAMES: Writer={coordinator.theme.writer.name}, Reader={coordinator.theme.reader.name}, Expert={coordinator.theme.expert.name}")
             
             # Create custom agent wrapper for streaming
             class StreamingAgent:
@@ -100,10 +134,13 @@ async def websocket_generate(websocket: WebSocket):
                     self.model = getattr(original_agent, 'model', 'anthropic/claude-3.5-sonnet')
                     
                 async def respond(self, prompt: str, skip_callback: bool = False):
+                    # Map theme-specific agent name to standard key for frontend
+                    agent_key = map_agent_name_to_key(self.name, self.coordinator)
+                    
                     # Send thinking state update
                     await self.websocket.send_json({
                         "type": "agent_update",
-                        "agent": self.name,
+                        "agent": agent_key,
                         "state": "thinking",
                         "activity": self._get_thinking_activity(),
                         "message": f"{self.name} is processing..."
@@ -115,7 +152,7 @@ async def websocket_generate(websocket: WebSocket):
                     # Send writing state update
                     await self.websocket.send_json({
                         "type": "agent_update",
-                        "agent": self.name,
+                        "agent": agent_key,
                         "state": "writing",
                         "activity": self._get_writing_activity(),
                         "message": f"{self.name} is composing response..."
@@ -128,7 +165,7 @@ async def websocket_generate(websocket: WebSocket):
                         # Send chunk via WebSocket
                         await self.websocket.send_json({
                             "type": "agent_stream_chunk",
-                            "agent": self.name,
+                            "agent": agent_key,
                             "chunk": sanitize_text(chunk),
                             "turn": self.coordinator.turn_count
                         })
@@ -136,7 +173,7 @@ async def websocket_generate(websocket: WebSocket):
                     # Send complete message when done
                     await self.websocket.send_json({
                         "type": "agent_message",
-                        "agent": self.name,
+                        "agent": agent_key,
                         "message": sanitize_text(response_text),
                         "turn": self.coordinator.turn_count,
                         "phase": self.coordinator.current_phase
@@ -147,7 +184,7 @@ async def websocket_generate(websocket: WebSocket):
                     if milestone:
                         await self.websocket.send_json({
                             "type": "agent_update",
-                            "agent": self.name,
+                            "agent": agent_key,
                             "state": "waiting",
                             "milestone": milestone,
                             "message": f"Milestone reached: {milestone}"
