@@ -5,6 +5,7 @@ import Terminal from '@/components/Terminal/Terminal'
 import BootSequence from '@/components/BootSequence/BootSequence'
 import StoryConfig, { StoryConfiguration } from '@/components/StoryConfig/StoryConfig'
 import MessageTabs from '@/components/MessageTabs/MessageTabs'
+import WelcomeScreen from '@/components/WelcomeScreen/WelcomeScreen'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { Howl } from 'howler'
 import { SessionMetadata, formatAgentLogs, downloadFile, generateFilename } from '@/utils/logFormatter'
@@ -20,7 +21,8 @@ const sounds = {
 }
 
 export default function Home() {
-  const [showBoot, setShowBoot] = useState(true)
+  const [showWelcome, setShowWelcome] = useState(true)
+  const [showBoot, setShowBoot] = useState(false)
   const [currentView, setCurrentView] = useState<'config' | 'generation' | 'complete'>('config')
   const [generatedStory, setGeneratedStory] = useState<string | null>(null)
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null)
@@ -46,6 +48,12 @@ export default function Home() {
     // Connect to WebSocket when component mounts
     connect()
   }, [connect])
+
+  const handleThemeSelect = (themeId: string) => {
+    setShowWelcome(false)
+    setShowBoot(true)
+    // sounds.boot.play()
+  }
 
   const handleBootComplete = () => {
     setShowBoot(false)
@@ -100,11 +108,18 @@ export default function Home() {
     }
   }, [messages])
 
+  if (showWelcome) {
+    return <WelcomeScreen onThemeSelect={handleThemeSelect} />
+  }
+
   if (showBoot) {
     return (
-      <Terminal showHeader={false}>
-        <BootSequence onComplete={handleBootComplete} />
-      </Terminal>
+      <>
+        <BackgroundSwitcher />
+        <Terminal showHeader={false}>
+          <BootSequence onComplete={handleBootComplete} />
+        </Terminal>
+      </>
     )
   }
 
@@ -285,12 +300,13 @@ export default function Home() {
               <button 
                 className="terminal-button full-width"
                 onClick={() => {
+                  setShowWelcome(true)
                   setCurrentView('config')
                   setGeneratedStory(null)
                   setShowLogFormatMenu(false)
                 }}
               >
-                GENERATE NEW STORY
+                CREATE NEW STORY
               </button>
             </div>
           </div>
