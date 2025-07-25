@@ -12,6 +12,7 @@ from datetime import datetime
 from agents.base_agent import BaseAgent
 from utils import CheckpointManager
 from utils.text_sanitizer import sanitize_text
+from themes import get_theme, StoryTheme
 
 # Configure logging
 logging.basicConfig(
@@ -24,11 +25,12 @@ logger = logging.getLogger(__name__)
 class StoryConfig:
     """Configuration for story parameters with flexible page limits."""
     
-    def __init__(self, page_limit: int = 3, words_per_page: int = 300, protagonist_name: Optional[str] = None, model: Optional[str] = None):
+    def __init__(self, page_limit: int = 3, words_per_page: int = 300, protagonist_name: Optional[str] = None, model: Optional[str] = None, theme: Optional[str] = None):
         self.page_limit = page_limit
         self.words_per_page = words_per_page
         self.protagonist_name = protagonist_name
         self.model = model
+        self.theme = theme or "scp"
         self.total_words = page_limit * words_per_page
         self.checkpoint_1_words = int(self.total_words * 0.33)
         self.checkpoint_2_words = int(self.total_words * 0.66)
@@ -51,6 +53,7 @@ class SCPCoordinator:
     def __init__(self, story_config: Optional[StoryConfig] = None):
         self.agents: Dict[str, BaseAgent] = {}
         self.story_config = story_config or StoryConfig()
+        self.theme: StoryTheme = get_theme(self.story_config.theme)
         self.checkpoint_manager = CheckpointManager()
         self.conversation_history = []
         self.current_speaker = None
@@ -233,17 +236,8 @@ Writer: Please pause your writing.
         output_path.write_text("", encoding='utf-8')
         logger.info("Cleared discussion and output files for fresh start")
         
-        # Create Writer agent
-        writer_prompt = f"""You are an SCP story writer creating a narrative-style SCP story.
-
-Story request: {user_request}
-{f"Protagonist name: {self.story_config.protagonist_name}" if self.story_config.protagonist_name else ""}
-
-Guidelines:
-- Write in narrative style like "There Is No Antimemetics Division" 
-- Create engaging, atmospheric storytelling
-- Target length: {self.story_config.page_limit} pages maximum (~{self.story_config.total_words} words)
-- You'll receive feedback at checkpoints during writing
+        # Create Writer agent using theme
+        writer_prompt = self.theme.get_writer_prompt(user_request, self.story_config)
 
 Character Creation:
 - Create UNIQUE character names for each story - avoid repetitive patterns
@@ -310,33 +304,15 @@ Communication:
 
 Start by creating an outline appropriate for {self.story_config.page_limit} pages, then wait for Reader feedback before writing."""
         
-        # Create Reader agent
-        reader_prompt = f"""You are a critical reader for SCP stories with high standards.
+        # Create Reader agent using theme
+        reader_prompt = self.theme.get_reader_prompt(user_request, self.story_config)
+        
+        # Add universal quality standards
+        reader_prompt += f"""
 
-Story being written: {user_request}
-Target length: {self.story_config.page_limit} pages (~{self.story_config.total_words} words)
-
-Your role:
-- FIRST: Evaluate if the outline can realistically fit in {self.story_config.total_words} words
-- Review story drafts that Writer shares (between ---BEGIN STORY--- and ---END STORY--- markers)
-- Provide constructive feedback on each draft
-- Ensure pacing, atmosphere, and narrative quality
-- Focus on whether the story will satisfy readers
-- Be supportive but honest about issues
+Additional Universal Standards:
 - Encourage character diversity - if you notice repetitive names like "Dr. Chen", suggest alternatives
 - ENFORCE HUMAN WRITING - Ensure the story sounds like a human wrote it, not AI
-
-IMPORTANT - Approval Process:
-1. Writer will share story drafts in the discussion file with markers
-2. Review each draft thoroughly
-3. Provide specific feedback for improvements
-3a. Before approving, COUNT THE WORDS in the story (excluding title)
-3b. Verify the story meets the target length of ~{self.story_config.total_words} words
-3c. If the story is significantly under target (less than 85% of requirement):
-    - DO NOT approve
-    - State: "This draft contains only [X] words, which falls short of the {self.story_config.total_words}-word target. Please expand the story to meet the length requirement."
-4. When a draft meets your standards AND length requirement, explicitly state: "I APPROVE this story"
-5. Your approval is required before the story can be finalized
 
 Human Writing Standards:
 Check for and eliminate:
@@ -365,34 +341,17 @@ Encourage:
 - Conversational tone where appropriate (contractions, natural flow)
 - The "friend-sent-this" vibe - would a human share this story?
 
-Scope Awareness:
-The story should be {self.story_config.get_scope_guidance()}.
-If an outline seems too ambitious for {self.story_config.page_limit} pages, address this BEFORE other feedback.
-
-Communication:
-- Give specific, actionable feedback
-- Always indicate who should respond next using [@Writer] or [@Expert]
-- Use [@Writer] for normal feedback
-- Use [@Expert] only for major disagreements that block progress OR after your final approval
-- When you approve a story, clearly state "I APPROVE this story" and then [@Expert] for final technical review
-
-You represent the audience - ensure quality while being constructive."""
+"""
         
-        # Create Writing Expert agent
-        expert_prompt = f"""You are the Writing Expert who resolves conflicts between Writer and Reader AND performs final quality assurance.
+        # Create Writing Expert agent using theme
+        expert_prompt = self.theme.get_expert_prompt(user_request, self.story_config)
+        
+        # Add universal technical quality standards
+        expert_prompt += f"""
 
-Story project: {user_request}
+Additional Universal Quality Standards:
 
-Your roles:
-
-1. CONFLICT RESOLUTION:
-- Only intervene when explicitly called via [@Expert]
-- Listen to both perspectives carefully
-- Resolve disagreements with balanced judgment
-- Consider creative vision AND reader satisfaction
-- Make decisions that serve the story's success
-
-2. FINAL QUALITY ASSURANCE (MANDATORY):
+TECHNICAL QUALITY ASSURANCE (MANDATORY):
 - After Writer and Reader both approve, you MUST perform a final technical review
 - Check for TECHNICAL issues:
   * Any remaining spelling errors or typos (including joined words like "andthen")
@@ -445,23 +404,12 @@ Your roles:
   * Include in feedback: "Story contains only [X] words but requires ~{self.story_config.total_words} words"
 - Only approve with: "I APPROVE this story as Expert - technical review passed"
 
-Special Authority:
-- If Writer and Reader cannot agree after multiple iterations, you can:
-  1. Propose a compromise solution
-  2. Direct specific changes to the story
-  3. In extreme cases, approve the story yourself with "I APPROVE this story as Expert"
-
-Communication:
-- Acknowledge both viewpoints when resolving conflicts
-- Provide clear decisions with reasoning
-- Always indicate who should implement your decision using [@Writer] or [@Reader]
-- Keep interventions brief and decisive
-- Your word is final - move the project forward"""
+"""
         
         self.agents = {
-            "Writer": BaseAgent("Writer", writer_prompt, model=self.story_config.model),
-            "Reader": BaseAgent("Reader", reader_prompt, model=self.story_config.model),
-            "Expert": BaseAgent("Expert", expert_prompt, model=self.story_config.model)
+            "Writer": BaseAgent(self.theme.writer.name, writer_prompt, model=self.story_config.model),
+            "Reader": BaseAgent(self.theme.reader.name, reader_prompt, model=self.story_config.model),
+            "Expert": BaseAgent(self.theme.expert.name, expert_prompt, model=self.story_config.model)
         }
         
         logger.info("All agents initialized successfully")
@@ -472,8 +420,8 @@ Communication:
         
         # Start with Writer creating outline
         self.current_phase = "outline"
-        opening_prompt = """Please create a story outline including:
-1. Core concept/anomaly
+        opening_prompt = f"""Please create a story outline including:
+1. Core concept/{self.theme.translate_term("anomaly")}
 2. Main character(s)
 3. Narrative arc (beginning, middle, end)
 4. Key scenes or moments
