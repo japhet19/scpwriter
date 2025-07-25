@@ -10,6 +10,7 @@ import { getTheme } from '@/themes/themeConfig'
 
 interface StoryConfigProps {
   onSubmit: (config: StoryConfiguration) => void
+  onChangeTheme?: () => void
 }
 
 export interface StoryConfiguration {
@@ -22,7 +23,7 @@ export interface StoryConfiguration {
   uiTheme: string
 }
 
-export default function StoryConfig({ onSubmit }: StoryConfigProps) {
+export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProps) {
   const [theme, setTheme] = useState('')
   const [pages, setPages] = useState(3)
   const [protagonist, setProtagonist] = useState('')
@@ -70,6 +71,18 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
     <form onSubmit={handleSubmit} className={styles.configForm}>
       <div className={styles.formHeader}>
         <h2>┌─── {selectedThemeConfig.formConfig.headerTitle} ───────────────────┐</h2>
+        <div className={styles.themeIndicator}>
+          <span className={styles.themeLabel}>SELECTED UNIVERSE:</span>
+          <span className={styles.themeName}>{selectedThemeConfig.name.toUpperCase()}</span>
+          <button 
+            type="button" 
+            className={styles.changeThemeButton}
+            onClick={onChangeTheme}
+            title="Change theme"
+          >
+            ⚙️ CHANGE
+          </button>
+        </div>
       </div>
       
       <div className={styles.formContent}>

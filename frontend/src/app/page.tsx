@@ -128,7 +128,10 @@ export default function Home() {
       <BackgroundSwitcher />
       <Terminal>
         {currentView === 'config' && (
-          <StoryConfig onSubmit={handleStorySubmit} />
+          <StoryConfig 
+            onSubmit={handleStorySubmit} 
+            onChangeTheme={() => setShowWelcome(true)}
+          />
         )}
       
       {currentView === 'generation' && (
