@@ -238,6 +238,9 @@ Writer: Please pause your writing.
         
         # Create Writer agent using theme
         writer_prompt = self.theme.get_writer_prompt(user_request, self.story_config)
+        
+        # Append additional universal guidelines to writer prompt
+        writer_prompt += f"""
 
 Character Creation:
 - Create UNIQUE character names for each story - avoid repetitive patterns

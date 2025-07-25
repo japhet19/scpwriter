@@ -6,6 +6,7 @@ import { MODEL_CATEGORIES, DEFAULT_MODEL, getModelById, getCostIndicator, ModelI
 import TerminalDropdown from '@/components/TerminalDropdown/TerminalDropdown'
 import ThemeSelector from '@/components/ThemeSelector/ThemeSelector'
 import { useTheme } from '@/contexts/ThemeContext'
+import { getTheme } from '@/themes/themeConfig'
 
 interface StoryConfigProps {
   onSubmit: (config: StoryConfiguration) => void
@@ -21,14 +22,6 @@ export interface StoryConfiguration {
   uiTheme: string
 }
 
-const exampleThemes = [
-  'A mirror that shows your greatest fear',
-  'A door that opens to alternate realities',
-  'A phone booth that calls the dead',
-  'A painting that ages instead of its owner',
-  'An elevator that goes to floors that don\'t exist'
-]
-
 export default function StoryConfig({ onSubmit }: StoryConfigProps) {
   const [theme, setTheme] = useState('')
   const [pages, setPages] = useState(3)
@@ -37,8 +30,11 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
   const [enableRedaction, setEnableRedaction] = useState(true)
   const [isGeneratingName, setIsGeneratingName] = useState(false)
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL)
-  const { themeId } = useTheme()
+  const { themeId, currentTheme } = useTheme()
   const [selectedTheme, setSelectedTheme] = useState(themeId)
+  
+  // Get the selected theme's configuration
+  const selectedThemeConfig = getTheme(selectedTheme)
 
   const generateProtagonistName = () => {
     setIsGeneratingName(true)
@@ -73,28 +69,28 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
   return (
     <form onSubmit={handleSubmit} className={styles.configForm}>
       <div className={styles.formHeader}>
-        <h2>┌─── ANOMALY GENERATION PARAMETERS ───────────────────┐</h2>
+        <h2>┌─── {selectedThemeConfig.formConfig.headerTitle} ───────────────────┐</h2>
       </div>
       
       <div className={styles.formContent}>
         <div className={styles.statusRow}>
-          <span>DESIGNATION: SCP-[PENDING]</span>
-          <span>CLASSIFICATION: [PENDING]</span>
+          <span>{selectedThemeConfig.formConfig.statusLine1}</span>
+          <span>{selectedThemeConfig.formConfig.statusLine2}</span>
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>▼ ANOMALY DESCRIPTION</label>
+          <label className={styles.label}>▼ {selectedThemeConfig.formConfig.descriptionLabel}</label>
           <textarea
             className="terminal-input"
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
-            placeholder="Describe the anomalous object/entity..."
+            placeholder={selectedThemeConfig.formConfig.descriptionPlaceholder}
             rows={3}
             required
           />
           <div className={styles.examples}>
             <small>Examples:</small>
-            {exampleThemes.map((example, idx) => (
+            {selectedThemeConfig.formConfig.examplePrompts.map((example, idx) => (
               <button
                 key={idx}
                 type="button"
@@ -110,7 +106,7 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
         <div className={styles.formGroup}>
           <label className={styles.label}>▼ NARRATIVE PARAMETERS</label>
           <div className={styles.paramRow}>
-            <span>Document Length:</span>
+            <span>{selectedThemeConfig.formConfig.lengthLabel}:</span>
             <div className={styles.pageOptions}>
               {[1, 2, 3, 5, 10].map(num => (
                 <label key={num} className="led-radio">
@@ -235,7 +231,7 @@ export default function StoryConfig({ onSubmit }: StoryConfigProps) {
 
         <div className={styles.formActions}>
           <button type="submit" className="terminal-button">
-            INITIATE GENERATION
+            {selectedThemeConfig.formConfig.submitButtonText}
           </button>
           <button type="button" className="terminal-button" onClick={() => window.location.reload()}>
             ABORT MISSION

@@ -190,17 +190,23 @@ export default function Home() {
       {currentView === 'complete' && generatedStory && (
         <div className="story-view">
           <div className="story-header">
-            <h2>SCP FOUNDATION</h2>
-            <h3>SECURE. CONTAIN. PROTECT.</h3>
+            <h2>{currentTheme.formConfig.completedHeader.title}</h2>
+            <h3>{currentTheme.formConfig.completedHeader.subtitle}</h3>
             <hr />
-            <div className="classification">
-              <span>Item #: SCP-XXXX</span>
-              <span>Level 3/XXXX</span>
-            </div>
-            <div className="classification">
-              <span>Object Class: [PENDING]</span>
-              <span>Classified</span>
-            </div>
+            {currentTheme.formConfig.completedHeader.classification1 && (
+              <div className="classification">
+                <span>{currentTheme.formConfig.completedHeader.classification1}</span>
+                {currentTheme.formConfig.completedHeader.classification2 && (
+                  <span>Level 3/XXXX</span>
+                )}
+              </div>
+            )}
+            {currentTheme.formConfig.completedHeader.classification2 && (
+              <div className="classification">
+                <span>{currentTheme.formConfig.completedHeader.classification2}</span>
+                <span>Classified</span>
+              </div>
+            )}
           </div>
           
           <div className="story-content">
@@ -264,7 +270,7 @@ export default function Home() {
                 className="terminal-button"
                 onClick={() => {
                   // Download full session with story and logs
-                  const storyContent = `# SCP Foundation Document\n\n${generatedStory}\n\n---\n\n`
+                  const storyContent = `# ${currentTheme.formConfig.completedHeader.title}\n\n${generatedStory}\n\n---\n\n`
                   const logsContent = formatAgentLogs(messages, sessionMetadata || undefined, { format: 'md', includeMetadata: true })
                   const fullContent = storyContent + logsContent
                   const filename = generateFilename(sessionMetadata?.theme || 'unknown', 'md').replace('_log_', '_session_')

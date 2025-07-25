@@ -21,6 +21,23 @@ export interface UIFeature {
   value: string
 }
 
+export interface FormConfig {
+  headerTitle: string
+  statusLine1: string
+  statusLine2: string
+  descriptionLabel: string
+  descriptionPlaceholder: string
+  examplePrompts: string[]
+  lengthLabel: string
+  submitButtonText: string
+  completedHeader: {
+    title: string
+    subtitle: string
+    classification1?: string
+    classification2?: string
+  }
+}
+
 export interface StoryTheme {
   id: string
   name: string
@@ -37,6 +54,9 @@ export interface StoryTheme {
     effects: string[]
     backgroundType: string
   }
+  
+  // Form configuration
+  formConfig: FormConfig
   
   // Agent names for UI display
   agents: {
@@ -92,6 +112,28 @@ export const THEMES: Record<string, StoryTheme> = {
       effects: ['crt', 'scanlines', 'glitch', 'flicker'],
       backgroundType: 'grid'
     },
+    formConfig: {
+      headerTitle: 'ANOMALY GENERATION PARAMETERS',
+      statusLine1: 'DESIGNATION: SCP-[PENDING]',
+      statusLine2: 'CLASSIFICATION: [PENDING]',
+      descriptionLabel: 'ANOMALY DESCRIPTION',
+      descriptionPlaceholder: 'Describe the anomalous object/entity...',
+      examplePrompts: [
+        'A mirror that shows your greatest fear',
+        'A door that opens to alternate realities',
+        'A phone booth that calls the dead',
+        'A painting that ages instead of its owner',
+        'An elevator that goes to floors that don\'t exist'
+      ],
+      lengthLabel: 'Document Length',
+      submitButtonText: 'INITIATE GENERATION',
+      completedHeader: {
+        title: 'SCP FOUNDATION',
+        subtitle: 'SECURE. CONTAIN. PROTECT.',
+        classification1: 'Item #: SCP-XXXX',
+        classification2: 'Object Class: [PENDING]'
+      }
+    },
     agents: {
       writer: 'SCP_WRITER',
       reader: 'READER',
@@ -131,6 +173,26 @@ export const THEMES: Record<string, StoryTheme> = {
       },
       effects: ['sparkles', 'glow', 'float', 'shimmer'],
       backgroundType: 'forest'
+    },
+    formConfig: {
+      headerTitle: 'TALE CREATION ENCHANTMENT',
+      statusLine1: 'TALE NAME: [AWAITING INSPIRATION]',
+      statusLine2: 'GENRE: FANTASY ADVENTURE',
+      descriptionLabel: 'TALE PREMISE',
+      descriptionPlaceholder: 'What magical tale shall we weave today...',
+      examplePrompts: [
+        'A sword that chooses its wielder based on their dreams',
+        'A forest where time flows backward',
+        'A dragon who collects stories instead of gold',
+        'A magic school hidden in a thundercloud',
+        'A map that draws itself as you explore'
+      ],
+      lengthLabel: 'Tale Length',
+      submitButtonText: 'BEGIN THE TALE',
+      completedHeader: {
+        title: 'ENCHANTED TALES',
+        subtitle: 'A MAGICAL STORY'
+      }
     },
     agents: {
       writer: 'ROYAL_SCRIBE',
@@ -172,6 +234,26 @@ export const THEMES: Record<string, StoryTheme> = {
       effects: ['neon-glow', 'digital-rain', 'glitch', 'hologram'],
       backgroundType: 'city-lights'
     },
+    formConfig: {
+      headerTitle: 'DATA STREAM INITIALIZATION',
+      statusLine1: 'RUN_ID: [GENERATING]',
+      statusLine2: 'SECURITY: ENCRYPTED',
+      descriptionLabel: 'MISSION PARAMETERS',
+      descriptionPlaceholder: 'Input your run parameters, choom...',
+      examplePrompts: [
+        'A neural implant that stores deleted memories',
+        'A virus that makes AIs dream',
+        'A black market for stolen identities',
+        'A corpo tower that exists only in VR',
+        'A ghost in the machine seeking revenge'
+      ],
+      lengthLabel: 'Data Stream Length',
+      submitButtonText: 'JACK IN',
+      completedHeader: {
+        title: 'NEURAL NETWORK',
+        subtitle: 'DATA STREAM COMPLETE'
+      }
+    },
     agents: {
       writer: 'DATA_SCRIBE',
       reader: 'NETRUNNER',
@@ -211,6 +293,26 @@ export const THEMES: Record<string, StoryTheme> = {
       },
       effects: ['hearts', 'soft-glow', 'fade', 'sparkle'],
       backgroundType: 'rose-garden'
+    },
+    formConfig: {
+      headerTitle: 'LOVE STORY CREATION',
+      statusLine1: 'STORY TITLE: [AWAITING MUSE]',
+      statusLine2: 'GENRE: CONTEMPORARY ROMANCE',
+      descriptionLabel: 'LOVE STORY PREMISE',
+      descriptionPlaceholder: 'Tell me about the hearts that will meet...',
+      examplePrompts: [
+        'Two souls connected across time and distance',
+        'A bookshop where love letters mysteriously appear',
+        'Enemies forced to plan a wedding together',
+        'A dating app that matches based on dreams',
+        'Second chances at a high school reunion'
+      ],
+      lengthLabel: 'Story Length',
+      submitButtonText: 'WRITE OUR LOVE STORY',
+      completedHeader: {
+        title: 'HEARTS & LETTERS',
+        subtitle: 'A LOVE STORY'
+      }
     },
     agents: {
       writer: 'ROMANCE_AUTHOR',
@@ -252,6 +354,26 @@ export const THEMES: Record<string, StoryTheme> = {
       effects: ['film-grain', 'typewriter', 'smoke', 'rain'],
       backgroundType: 'rain-window'
     },
+    formConfig: {
+      headerTitle: 'CASE FILE INTAKE',
+      statusLine1: 'CASE #: [UNASSIGNED]',
+      statusLine2: 'STATUS: OPEN INVESTIGATION',
+      descriptionLabel: 'CASE DETAILS',
+      descriptionPlaceholder: 'Give me the facts, just the facts...',
+      examplePrompts: [
+        'A dame walks in with a secret that could topple the city',
+        'A photograph that reveals more with each viewing',
+        'The last honest cop in a crooked precinct',
+        'A jazz musician who plays clues in his solos',
+        'A missing person who was never there'
+      ],
+      lengthLabel: 'Case File Length',
+      submitButtonText: 'OPEN CASE FILE',
+      completedHeader: {
+        title: 'CASE CLOSED',
+        subtitle: 'INVESTIGATION COMPLETE'
+      }
+    },
     agents: {
       writer: 'PRIVATE_EYE',
       reader: 'CASE_REVIEWER',
@@ -291,6 +413,26 @@ export const THEMES: Record<string, StoryTheme> = {
       },
       effects: ['stars', 'hologram', 'pulse', 'warp'],
       backgroundType: 'starfield'
+    },
+    formConfig: {
+      headerTitle: 'MISSION BRIEFING PROTOCOL',
+      statusLine1: 'MISSION ID: [GENERATING]',
+      statusLine2: 'SECTOR: UNCHARTED',
+      descriptionLabel: 'MISSION PARAMETERS',
+      descriptionPlaceholder: 'Describe your mission into the unknown...',
+      examplePrompts: [
+        'A signal from a ship that hasn\'t launched yet',
+        'A planet where the laws of physics work differently',
+        'First contact with a species that communicates through color',
+        'A wormhole that leads to parallel universes',
+        'An AI that discovers the meaning of consciousness'
+      ],
+      lengthLabel: 'Mission Log Length',
+      submitButtonText: 'LAUNCH MISSION',
+      completedHeader: {
+        title: 'STELLAR CHRONICLES',
+        subtitle: 'MISSION LOG COMPLETE'
+      }
     },
     agents: {
       writer: 'SHIP_CHRONICLER',
