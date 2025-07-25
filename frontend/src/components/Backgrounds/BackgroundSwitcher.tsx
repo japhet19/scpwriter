@@ -26,7 +26,7 @@ export default function BackgroundSwitcher({ isStreaming = false }: BackgroundSw
   }
   
   if (currentTheme.id === 'romance' && currentTheme.ui.backgroundType === 'rose-garden') {
-    return <RomanceBackground />
+    return <RomanceBackground isStreaming={isStreaming} />
   }
   
   if (currentTheme.id === 'fantasy' && currentTheme.ui.backgroundType === 'forest') {

@@ -48,6 +48,60 @@ body {
   z-index: 20; /* Ensure scanlines are on top but very subtle */
 }
 
+/* Romance theme - soften terminal effects */
+.theme-romance .crt-container {
+  background: transparent;
+}
+
+.theme-romance .crt-container::before {
+  opacity: 0.01;
+  z-index: 20;
+}
+
+/* Romance theme terminal content soft glow */
+.theme-romance .terminal-content {
+  text-shadow: 0 0 2px rgba(255, 182, 193, 0.3);
+  animation: romanceGlow 4s ease-in-out infinite;
+}
+
+@keyframes romanceGlow {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 2px rgba(255, 182, 193, 0.2));
+  }
+  50% {
+    filter: brightness(1.05) drop-shadow(0 0 4px rgba(255, 182, 193, 0.3));
+  }
+}
+
+/* Pause animations during streaming for performance */
+.theme-romance.streaming .terminal-content {
+  animation-play-state: paused;
+}
+
+/* Romance theme typing animation */
+.theme-romance .typing-text {
+  position: relative;
+}
+
+.theme-romance .typing-text::after {
+  content: '💕';
+  position: absolute;
+  right: -20px;
+  opacity: 0;
+  animation: heartPulse 2s ease-in-out infinite;
+}
+
+@keyframes heartPulse {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
 /* Fantasy theme terminal window - ensure it's visible against magical background */
 .theme-fantasy .terminal-window {
   background: rgba(26, 15, 31, 0.9); /* Semi-transparent dark purple background */
@@ -56,6 +110,38 @@ body {
     0 0 30px rgba(255, 215, 0, 0.3),
     inset 0 0 20px rgba(255, 215, 0, 0.1);
   z-index: 15; /* Higher z-index to ensure visibility */
+}
+
+/* Romance theme terminal window with soft vignette */
+.theme-romance .terminal-window {
+  background: rgba(26, 26, 26, 0.85);
+  border: 2px solid rgba(255, 182, 193, 0.6);
+  border-radius: 12px;
+  position: relative;
+  box-shadow: 
+    0 0 40px rgba(255, 105, 180, 0.2),
+    inset 0 0 30px rgba(255, 182, 193, 0.05);
+  overflow: hidden;
+  z-index: 15;
+}
+
+/* Romance vignette effect */
+.theme-romance .terminal-window::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  background: radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ensure content is above vignette */
+.theme-romance .terminal-window > * {
+  position: relative;
+  z-index: 2;
 }
 
 /* Scanlines Effect */
@@ -202,6 +288,54 @@ body {
   transform: scale(0.98);
 }
 
+/* Romance theme button styling */
+.romance-button {
+  background: linear-gradient(135deg, rgba(255, 182, 193, 0.1), rgba(255, 105, 180, 0.1));
+  border: 2px solid #FFB6C1;
+  color: #FF69B4;
+  border-radius: 8px;
+  position: relative;
+  overflow: visible;
+  transition: all 0.3s ease;
+}
+
+.romance-button::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #FFB6C1, #FF69B4, #DC143C, #FF69B4);
+  border-radius: 8px;
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+}
+
+.romance-button:hover {
+  background: linear-gradient(135deg, rgba(255, 182, 193, 0.3), rgba(255, 105, 180, 0.3));
+  color: #fff;
+  text-shadow: 0 0 4px rgba(255, 105, 180, 0.8);
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(255, 105, 180, 0.4);
+}
+
+.romance-button:hover::before {
+  opacity: 1;
+  filter: blur(2px);
+}
+
+.romance-button:active {
+  transform: scale(1.02);
+}
+
+/* Romance button focus state */
+.romance-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 182, 193, 0.3);
+}
+
 /* Input Fields */
 .terminal-input {
   background: transparent;
@@ -218,6 +352,28 @@ body {
 .terminal-input:focus {
   border-bottom-color: var(--terminal-amber);
   box-shadow: 0 1px 0 var(--terminal-amber);
+}
+
+/* Romance theme input styling */
+.romance-input {
+  background: linear-gradient(to bottom, transparent 95%, rgba(255, 182, 193, 0.1) 95%);
+  border: none;
+  border-bottom: 2px solid #FFB6C1;
+  color: #FF69B4;
+  border-radius: 4px 4px 0 0;
+  padding: 10px 8px;
+  transition: all 0.3s ease;
+}
+
+.romance-input:focus {
+  border-bottom-color: #FF69B4;
+  background: linear-gradient(to bottom, rgba(255, 182, 193, 0.05) 0%, rgba(255, 182, 193, 0.1) 95%);
+  box-shadow: 0 2px 0 #FF69B4, 0 4px 8px rgba(255, 105, 180, 0.2);
+}
+
+.romance-input::placeholder {
+  color: rgba(255, 182, 193, 0.6);
+  font-style: italic;
 }
 
 /* Radio Buttons as LED Indicators */

@@ -123,7 +123,7 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
         <div className={styles.formGroup}>
           <label className={styles.label}>▼ {selectedThemeConfig.formConfig.descriptionLabel}</label>
           <textarea
-            className="terminal-input"
+            className={`terminal-input ${selectedTheme === 'romance' ? 'romance-input' : ''}`}
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
             placeholder={selectedThemeConfig.formConfig.descriptionPlaceholder}
@@ -172,14 +172,14 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
             <div className={styles.protagonistInput}>
               <input
                 type="text"
-                className="terminal-input"
+                className={`terminal-input ${selectedTheme === 'romance' ? 'romance-input' : ''}`}
                 value={protagonist}
                 onChange={(e) => setProtagonist(e.target.value)}
                 placeholder="Enter name or generate..."
               />
               <button
                 type="button"
-                className="terminal-button"
+                className={`terminal-button ${selectedTheme === 'romance' ? 'romance-button' : ''}`}
                 onClick={generateProtagonistName}
                 disabled={isGeneratingName}
               >
@@ -223,10 +223,10 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
         </div>
 
         <div className={styles.formActions}>
-          <button type="submit" className="terminal-button">
+          <button type="submit" className={`terminal-button ${selectedTheme === 'romance' ? 'romance-button' : ''}`}>
             {selectedThemeConfig.formConfig.submitButtonText}
           </button>
-          <button type="button" className="terminal-button" onClick={() => window.location.reload()}>
+          <button type="button" className={`terminal-button ${selectedTheme === 'romance' ? 'romance-button' : ''}`} onClick={() => window.location.reload()}>
             ABORT MISSION
           </button>
         </div>

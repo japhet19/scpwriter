@@ -1,28 +1,95 @@
+// Legacy interface for backward compatibility
 export interface NameData {
   firstNames: string[]
   lastNames: string[]
   titles: string[]
 }
 
-export const fantasyNames: NameData = {
-  firstNames: [
-    // Male Fantasy Names
-    'Theron', 'Caelum', 'Darius', 'Gareth', 'Lysander', 'Aldric', 'Finn', 'Kael', 
-    'Rowan', 'Tristan', 'Alaric', 'Cedric', 'Dorian', 'Evander', 'Griffin', 
-    'Hadrian', 'Leander', 'Magnus', 'Orion', 'Percival', 'Quinlan', 'Rhys',
-    'Soren', 'Tobias', 'Ulric', 'Varian', 'Wren', 'Xander', 'Yorick', 'Zephyr',
-    
-    // Female Fantasy Names  
-    'Elara', 'Lyandra', 'Seraphina', 'Nimue', 'Celeste', 'Aria', 'Brynn',
-    'Cordelia', 'Delphine', 'Evangeline', 'Freya', 'Guinevere', 'Helena',
-    'Isadora', 'Juliana', 'Kira', 'Luna', 'Morgana', 'Nyx', 'Ophelia',
-    'Penelope', 'Quinn', 'Rosalind', 'Stella', 'Thalia', 'Una', 'Vera',
-    'Willa', 'Xara', 'Yvaine', 'Zara',
-    
-    // Unisex Fantasy Names
-    'Sage', 'River', 'Phoenix', 'Ember', 'Storm', 'Vale', 'Ash', 'Raven',
-    'Frost', 'Jade', 'Silver', 'Dawn', 'Sky', 'Rain'
-  ],
+// New gender-aware interface
+export interface GenderAwareNameData {
+  male: {
+    names: string[]
+    titles: string[]
+  }
+  female: {
+    names: string[]
+    titles: string[]
+  }
+  neutral: {
+    names: string[]
+    titles: string[]
+  }
+  lastNames: string[]
+}
+
+export const fantasyNames: GenderAwareNameData = {
+  male: {
+    names: [
+      'Theron', 'Caelum', 'Darius', 'Gareth', 'Lysander', 'Aldric', 'Finn', 'Kael', 
+      'Rowan', 'Tristan', 'Alaric', 'Cedric', 'Dorian', 'Evander', 'Griffin', 
+      'Hadrian', 'Leander', 'Magnus', 'Orion', 'Percival', 'Quinlan', 'Rhys',
+      'Soren', 'Tobias', 'Ulric', 'Varian', 'Wren', 'Xander', 'Yorick', 'Zephyr'
+    ],
+    titles: [
+      // Male Noble Titles
+      'Sir', 'Lord', 'Duke', 'Count', 'Baron', 'Prince', 'King',
+      
+      // Male Magical/Mystical Titles
+      'Wizard', 'Enchanter', 'Archmage', 'Sage', 'Prophet', 'Mystic', 'Diviner',
+      
+      // Male Warrior/Military Titles
+      'Knight', 'Paladin', 'Ranger', 'Guardian', 'Defender', 'Champion',
+      'Warden', 'Sentinel', 'Captain', 'Commander', 'General',
+      
+      // Male Religious/Spiritual Titles
+      'High Priest', 'Cleric', 'Druid', 'Archdruid', 'Elder', 'Monk', 'Abbot', 'Brother',
+      
+      // Male Scholarly/Artistic Titles
+      'Scholar', 'Lorekeeper', 'Chronicler', 'Bard', 'Minstrel', 'Scribe',
+      'Historian', 'Philosopher', 'Alchemist', 'Artificer'
+    ]
+  },
+
+  female: {
+    names: [
+      'Elara', 'Lyandra', 'Seraphina', 'Nimue', 'Celeste', 'Aria', 'Brynn',
+      'Cordelia', 'Delphine', 'Evangeline', 'Freya', 'Guinevere', 'Helena',
+      'Isadora', 'Juliana', 'Kira', 'Luna', 'Morgana', 'Nyx', 'Ophelia',
+      'Penelope', 'Quinn', 'Rosalind', 'Stella', 'Thalia', 'Una', 'Vera',
+      'Willa', 'Xara', 'Yvaine', 'Zara'
+    ],
+    titles: [
+      // Female Noble Titles
+      'Lady', 'Dame', 'Duchess', 'Countess', 'Baroness', 'Princess', 'Queen',
+      
+      // Female Magical/Mystical Titles
+      'Sorceress', 'Enchantress', 'Archmage', 'Sage', 'Oracle', 'Seer', 'Prophetess', 'Mystic', 'Diviner',
+      
+      // Female Warrior/Military Titles (gender-neutral in fantasy)
+      'Knight', 'Paladin', 'Ranger', 'Guardian', 'Defender', 'Champion',
+      'Warden', 'Sentinel', 'Captain', 'Commander', 'General',
+      
+      // Female Religious/Spiritual Titles
+      'High Priestess', 'Priestess', 'Cleric', 'Druid', 'Archdruid', 'Elder', 'Mother Superior', 'Sister',
+      
+      // Female Scholarly/Artistic Titles
+      'Scholar', 'Lorekeeper', 'Chronicler', 'Bard', 'Minstrel', 'Scribe',
+      'Historian', 'Philosopher', 'Alchemist', 'Artificer'
+    ]
+  },
+
+  neutral: {
+    names: [
+      'Sage', 'River', 'Phoenix', 'Ember', 'Storm', 'Vale', 'Ash', 'Raven',
+      'Frost', 'Jade', 'Silver', 'Dawn', 'Sky', 'Rain'
+    ],
+    titles: [
+      // Gender-neutral titles that work with any name
+      'Mage', 'Sage', 'Elder', 'Scholar', 'Ranger', 'Guardian', 'Champion',
+      'Lorekeeper', 'Chronicler', 'Bard', 'Historian', 'Alchemist', 'Artificer',
+      'Druid', 'Mystic', 'Seer', 'Captain', 'Commander'
+    ]
+  },
 
   lastNames: [
     // Nature-Inspired
@@ -45,27 +112,22 @@ export const fantasyNames: NameData = {
     // Geographic/Locational
     'Rivendell', 'Mistwood', 'Blackwater', 'Redmount', 'Greenhaven',
     'Silverdale', 'Goldmeadow', 'Ironhill', 'Crystalfall', 'Starholm'
-  ],
-
-  titles: [
-    // Noble Titles
-    'Sir', 'Lady', 'Lord', 'Dame', 'Duke', 'Duchess', 'Count', 'Countess',
-    'Baron', 'Baroness', 'Prince', 'Princess', 'King', 'Queen',
-    
-    // Magical/Mystical Titles
-    'Mage', 'Wizard', 'Sorceress', 'Enchanter', 'Archmage', 'Sage',
-    'Oracle', 'Seer', 'Prophet', 'Mystic', 'Diviner',
-    
-    // Warrior/Military Titles
-    'Knight', 'Paladin', 'Ranger', 'Guardian', 'Defender', 'Champion',
-    'Warden', 'Sentinel', 'Captain', 'Commander', 'General',
-    
-    // Religious/Spiritual Titles
-    'High Priest', 'Priestess', 'Cleric', 'Druid', 'Archdruid', 'Elder',
-    'Monk', 'Abbot', 'Mother Superior', 'Brother', 'Sister',
-    
-    // Scholarly/Artistic Titles
-    'Scholar', 'Lorekeeper', 'Chronicler', 'Bard', 'Minstrel', 'Scribe',
-    'Historian', 'Philosopher', 'Alchemist', 'Artificer'
   ]
+}
+
+// Backward compatibility function for legacy NameData interface
+export function getLegacyFantasyNames(): NameData {
+  return {
+    firstNames: [
+      ...fantasyNames.male.names,
+      ...fantasyNames.female.names,
+      ...fantasyNames.neutral.names
+    ],
+    lastNames: fantasyNames.lastNames,
+    titles: [
+      ...fantasyNames.male.titles,
+      ...fantasyNames.female.titles,
+      ...fantasyNames.neutral.titles
+    ]
+  }
 }

@@ -139,3 +139,126 @@
     max-width: 100px;
   }
 }
+
+/* Romance theme specific styles */
+.romanceSliderContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.romanceSlider {
+  width: 100% !important;
+  flex: 1;
+  height: 10px !important;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 5px;
+  outline: none;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+  margin: 12px 0;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.romanceSlider:hover {
+  opacity: 1;
+}
+
+/* Romance theme heart-shaped thumb */
+.romanceSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px !important;
+  height: 24px !important;
+  background: #FF69B4;
+  border: 3px solid #FFB6C1;
+  cursor: pointer;
+  position: relative;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 8px rgba(255, 105, 180, 0.4);
+  transition: all 0.3s ease;
+}
+
+.romanceSlider::-webkit-slider-thumb::before {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: #FF69B4;
+  border-radius: 50%;
+  top: -12px;
+  left: 0;
+}
+
+.romanceSlider::-webkit-slider-thumb::after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: #FF69B4;
+  border-radius: 50%;
+  left: 12px;
+  top: 0;
+}
+
+.romanceSlider::-webkit-slider-thumb:hover {
+  transform: rotate(-45deg) scale(1.1);
+  box-shadow: 0 6px 12px rgba(255, 105, 180, 0.6);
+}
+
+.romanceSlider::-moz-range-thumb {
+  width: 24px !important;
+  height: 24px !important;
+  background: #FF69B4;
+  border: 3px solid #FFB6C1;
+  cursor: pointer;
+  border-radius: 4px;
+  transform: rotate(-45deg);
+  box-shadow: 0 4px 8px rgba(255, 105, 180, 0.4);
+  transition: all 0.3s ease;
+}
+
+.romanceSlider::-moz-range-thumb:hover {
+  transform: rotate(-45deg) scale(1.1);
+  box-shadow: 0 6px 12px rgba(255, 105, 180, 0.6);
+}
+
+/* Romance slider endpoints */
+.romanceSliderEndpoints {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  padding: 0 2px;
+}
+
+.romanceEndpoint {
+  font-size: 14px;
+  opacity: 0.5;
+  filter: grayscale(50%);
+}
+
+/* Romance-specific label colors */
+.romanceLeftLabel {
+  color: #FFB6C1;
+  text-shadow: 0 0 4px rgba(255, 182, 193, 0.3);
+}
+
+.romanceRightLabel {
+  color: #DC143C;
+  text-shadow: 0 0 4px rgba(220, 20, 60, 0.3);
+}
+
+/* Romance value display */
+.romanceSliderValue {
+  color: #FF69B4;
+  font-family: 'Dancing Script', cursive;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 0 0 4px rgba(255, 105, 180, 0.3);
+}

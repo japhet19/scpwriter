@@ -303,32 +303,32 @@ export default function Home() {
           <div className="story-actions">
             <div className="action-row">
               <button 
-                className={`terminal-button ${currentTheme.id === 'fantasy' ? 'fantasy-action-button' : ''}`}
+                className={`terminal-button ${currentTheme.id === 'fantasy' ? 'fantasy-action-button' : currentTheme.id === 'romance' ? 'romance-button' : ''}`}
                 onClick={() => {
                   navigator.clipboard.writeText(generatedStory)
-                  alert(currentTheme.id === 'fantasy' ? 'Tale copied to your scroll case! ✨' : 'Story copied to clipboard!')
+                  alert(currentTheme.id === 'fantasy' ? 'Tale copied to your scroll case! ✨' : currentTheme.id === 'romance' ? 'Love letter copied to your heart! 💖' : 'Story copied to clipboard!')
                 }}
               >
-                COPY STORY
+                {currentTheme.id === 'romance' ? '💝 ' : ''}COPY STORY
               </button>
               <button 
-                className={`terminal-button ${currentTheme.id === 'fantasy' ? 'fantasy-action-button' : ''}`}
+                className={`terminal-button ${currentTheme.id === 'fantasy' ? 'fantasy-action-button' : currentTheme.id === 'romance' ? 'romance-button' : ''}`}
                 onClick={() => {
                   const filename = generateFilename(sessionMetadata?.theme || 'unknown', 'txt').replace('_log_', '_story_')
                   downloadFile(generatedStory, filename, 'text/plain')
                 }}
               >
-                DOWNLOAD STORY
+                {currentTheme.id === 'romance' ? '💌 ' : ''}DOWNLOAD STORY
               </button>
             </div>
             
             <div className="action-row">
               <div className="download-logs-container">
                 <button 
-                  className={`terminal-button ${currentTheme.id === 'fantasy' ? 'fantasy-action-button' : ''}`}
+                  className={`terminal-button ${currentTheme.id === 'fantasy' ? 'fantasy-action-button' : currentTheme.id === 'romance' ? 'romance-button' : ''}`}
                   onClick={() => setShowLogFormatMenu(!showLogFormatMenu)}
                 >
-                  DOWNLOAD LOGS ⬇
+                  {currentTheme.id === 'romance' ? '📜 ' : ''}DOWNLOAD LOGS ⬇
                 </button>
                 {showLogFormatMenu && (
                   <div className="format-menu">
@@ -354,7 +354,7 @@ export default function Home() {
                 )}
               </div>
               <button 
-                className={`terminal-button ${currentTheme.id === 'fantasy' ? 'fantasy-action-button' : ''}`}
+                className={`terminal-button ${currentTheme.id === 'fantasy' ? 'fantasy-action-button' : currentTheme.id === 'romance' ? 'romance-button' : ''}`}
                 onClick={() => {
                   // Download full session with story and logs
                   const storyContent = `# ${currentTheme.formConfig.completedHeader.title}\n\n${generatedStory}\n\n---\n\n`
@@ -364,7 +364,7 @@ export default function Home() {
                   downloadFile(fullContent, filename, 'text/markdown')
                 }}
               >
-                DOWNLOAD FULL SESSION
+                {currentTheme.id === 'romance' ? '💘 ' : ''}DOWNLOAD FULL SESSION
               </button>
             </div>
             
@@ -378,7 +378,7 @@ export default function Home() {
                   setShowLogFormatMenu(false)
                 }}
               >
-                CREATE NEW STORY
+                {currentTheme.id === 'romance' ? '💕 ' : ''}CREATE NEW STORY
               </button>
             </div>
           </div>

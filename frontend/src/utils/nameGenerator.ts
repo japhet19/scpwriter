@@ -1,19 +1,27 @@
-import { fantasyNames } from './nameData/fantasyNames'
+import { fantasyNames, GenderAwareNameData, NameData, getLegacyFantasyNames } from './nameData/fantasyNames'
 import { cyberpunkNames } from './nameData/cyberpunkNames'
 import { romanceNames } from './nameData/romanceNames'
 import { noirNames } from './nameData/noirNames'
 import { scifiNames } from './nameData/scifiNames'
-import { NameData } from './nameData/fantasyNames'
 
-// Theme to name data mapping
-const themeNameData: Record<string, NameData> = {
-  fantasy: fantasyNames,
+// Gender categories for selection
+type GenderCategory = 'male' | 'female' | 'neutral'
+
+// Theme to name data mapping (legacy format for non-upgraded themes)
+const legacyThemeNameData: Record<string, NameData> = {
+  fantasy: getLegacyFantasyNames(), // Use legacy compatibility for now
   cyberpunk: cyberpunkNames,
   romance: romanceNames,
   noir: noirNames,
   scifi: scifiNames,
   // SCP theme uses generic sci-fi style names
   scp: scifiNames
+}
+
+// Theme to gender-aware name data mapping (new format)
+const genderAwareThemeData: Record<string, GenderAwareNameData> = {
+  fantasy: fantasyNames,
+  // Other themes will be added as we upgrade them
 }
 
 // Session memory for avoiding repetition
@@ -63,10 +71,71 @@ function addToRecentNames(name: string): void {
 }
 
 /**
+ * Select a random gender category with balanced distribution
+ */
+function selectRandomGender(): GenderCategory {
+  const rand = getSecureRandom(100)
+  if (rand < 45) return 'male'      // 45% chance
+  if (rand < 90) return 'female'    // 45% chance  
+  return 'neutral'                  // 10% chance
+}
+
+/**
+ * Check if theme has gender-aware name data
+ */
+function hasGenderAwareData(theme: string): boolean {
+  return theme in genderAwareThemeData
+}
+
+/**
+ * Generate gender-aware name for themes that support it
+ */
+function generateGenderAwareName(theme: string): string {
+  const nameData = genderAwareThemeData[theme]
+  if (!nameData) {
+    throw new Error(`Theme ${theme} does not have gender-aware data`)
+  }
+
+  // Select gender category
+  const genderCategory = selectRandomGender()
+  const genderData = nameData[genderCategory]
+
+  // Generate name components using gender-appropriate data
+  const title = getRandomWithMemory(genderData.titles, recentNames.filter(n => genderData.titles.includes(n)))
+  const firstName = getRandomWithMemory(genderData.names, recentNames.filter(n => genderData.names.includes(n)))
+  const lastName = getRandomWithMemory(nameData.lastNames, recentNames.filter(n => nameData.lastNames.includes(n)))
+
+  // Theme-specific name construction (fantasy for now)
+  let generatedName: string
+  
+  if (theme === 'fantasy') {
+    // Fantasy: Usually skip titles for more natural names
+    if (getSecureRandom(100) < 70) { // 70% chance no title
+      generatedName = `${firstName} ${lastName}`
+    } else {
+      generatedName = `${title} ${firstName} ${lastName}`
+    }
+  } else {
+    // Default: Standard title + name format
+    generatedName = `${title} ${firstName} ${lastName}`
+  }
+
+  return generatedName
+}
+
+/**
  * Generate theme-appropriate protagonist name
  */
 export function generateThemeProtagonistName(theme: string): string {
-  const nameData = themeNameData[theme] || themeNameData.scp
+  // Use gender-aware generation for themes that support it
+  if (hasGenderAwareData(theme)) {
+    const generatedName = generateGenderAwareName(theme)
+    addToRecentNames(generatedName)
+    return generatedName
+  }
+
+  // Fall back to legacy generation for non-upgraded themes
+  const nameData = legacyThemeNameData[theme] || legacyThemeNameData.scp
   
   // Extract arrays from name data
   const { firstNames, lastNames, titles } = nameData
@@ -81,8 +150,8 @@ export function generateThemeProtagonistName(theme: string): string {
   
   switch (theme) {
     case 'fantasy':
-      // Fantasy: Sometimes skip titles for more natural names
-      if (getSecureRandom(100) < 30) { // 30% chance no title
+      // Fantasy: Usually skip titles for more natural names
+      if (getSecureRandom(100) < 70) { // 70% chance no title
         generatedName = `${firstName} ${lastName}`
       } else {
         generatedName = `${title} ${firstName} ${lastName}`
@@ -104,10 +173,10 @@ export function generateThemeProtagonistName(theme: string): string {
       // Romance: Elegant, often without titles unless noble
       if (titles.includes(title) && (title.includes('Lord') || title.includes('Lady') || title.includes('Duke') || title.includes('Duchess'))) {
         generatedName = `${title} ${firstName} ${lastName}`
-      } else if (getSecureRandom(100) < 20) { // 20% chance of professional title
-        generatedName = `${title} ${firstName} ${lastName}`
-      } else {
+      } else if (getSecureRandom(100) < 80) { // 80% chance no title
         generatedName = `${firstName} ${lastName}`
+      } else {
+        generatedName = `${title} ${firstName} ${lastName}`
       }
       break
       
@@ -115,10 +184,10 @@ export function generateThemeProtagonistName(theme: string): string {
       // Noir: Hard-boiled style, often with detective titles
       if (title.includes('Detective') || title.includes('Private')) {
         generatedName = `${title} ${firstName} ${lastName}`
-      } else if (getSecureRandom(100) < 40) { // 40% chance of other titles
-        generatedName = `${title} ${firstName} ${lastName}`
-      } else {
+      } else if (getSecureRandom(100) < 60) { // 60% chance no title
         generatedName = `${firstName} ${lastName}`
+      } else {
+        generatedName = `${title} ${firstName} ${lastName}`
       }
       break
       
@@ -127,7 +196,7 @@ export function generateThemeProtagonistName(theme: string): string {
       // Sci-fi: Military ranks and scientific titles common
       if (title.includes('Admiral') || title.includes('Captain') || title.includes('Commander') || title.includes('Chief')) {
         generatedName = `${title} ${firstName} ${lastName}`
-      } else if (getSecureRandom(100) < 60) { // 60% chance of title in sci-fi
+      } else if (getSecureRandom(100) < 40) { // 40% chance of title in sci-fi
         generatedName = `${title} ${firstName} ${lastName}`
       } else {
         generatedName = `${firstName} ${lastName}`
@@ -149,7 +218,7 @@ export function generateThemeProtagonistName(theme: string): string {
  * Generate advanced multi-part names for specific themes
  */
 export function generateAdvancedThemeName(theme: string): string {
-  const nameData = themeNameData[theme] || themeNameData.scp
+  const nameData = legacyThemeNameData[theme] || legacyThemeNameData.scp
   
   switch (theme) {
     case 'fantasy':
@@ -197,7 +266,7 @@ export function clearNameMemory(): void {
  * Get available themes for name generation
  */
 export function getAvailableThemes(): string[] {
-  return Object.keys(themeNameData)
+  return Object.keys(legacyThemeNameData)
 }
 
 /**
@@ -209,7 +278,21 @@ export function getNameGenerationStats(theme: string): {
   titles: number
   totalCombinations: number
 } {
-  const nameData = themeNameData[theme] || themeNameData.scp
+  if (hasGenderAwareData(theme)) {
+    const nameData = genderAwareThemeData[theme]
+    const totalFirstNames = nameData.male.names.length + nameData.female.names.length + nameData.neutral.names.length
+    const totalTitles = nameData.male.titles.length + nameData.female.titles.length + nameData.neutral.titles.length
+    
+    return {
+      firstNames: totalFirstNames,
+      lastNames: nameData.lastNames.length,
+      titles: totalTitles,
+      totalCombinations: totalFirstNames * nameData.lastNames.length * totalTitles
+    }
+  }
+
+  // Legacy format for non-upgraded themes
+  const nameData = legacyThemeNameData[theme] || legacyThemeNameData.scp
   const { firstNames, lastNames, titles } = nameData
   
   return {
