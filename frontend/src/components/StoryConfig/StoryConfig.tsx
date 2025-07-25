@@ -4,7 +4,6 @@ import React, { useState } from 'react'
 import styles from './StoryConfig.module.css'
 import { MODEL_CATEGORIES, DEFAULT_MODEL, getModelById, getCostIndicator, ModelInfo } from '@/config/models'
 import TerminalDropdown from '@/components/TerminalDropdown/TerminalDropdown'
-import ThemeSelector from '@/components/ThemeSelector/ThemeSelector'
 import { useTheme } from '@/contexts/ThemeContext'
 import { getTheme } from '@/themes/themeConfig'
 
@@ -89,14 +88,6 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
         <div className={styles.statusRow}>
           <span>{selectedThemeConfig.formConfig.statusLine1}</span>
           <span>{selectedThemeConfig.formConfig.statusLine2}</span>
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.label}>▼ STORY THEME SELECTION</label>
-          <ThemeSelector 
-            storyTheme={theme}
-            onThemeChange={setSelectedTheme}
-          />
         </div>
 
         <div className={styles.formGroup}>
