@@ -2,13 +2,19 @@
 
 import React, { useEffect, useRef } from 'react'
 import { AgentMessage } from '@/hooks/useWebSocket'
+import { 
+  parseAgentMessage, 
+  formatInteractionFlow, 
+  smartTruncate,
+  getMessageTypeIcon 
+} from '@/utils/messageParser'
 
 interface ActivityFeedProps {
   messages: AgentMessage[]
   currentActivity: string
 }
 
-export default function ActivityFeed({ messages, currentActivity }: ActivityFeedProps) {
+function ActivityFeed({ messages, currentActivity }: ActivityFeedProps) {
   const feedRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -16,7 +22,7 @@ export default function ActivityFeed({ messages, currentActivity }: ActivityFeed
     if (feedRef.current) {
       feedRef.current.scrollTop = feedRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages.length]) // Only trigger on length change, not content updates
 
   const getActivityDescription = (msg: AgentMessage): string => {
     if (msg.activity) return msg.activity
@@ -49,8 +55,17 @@ export default function ActivityFeed({ messages, currentActivity }: ActivityFeed
         break
       case 'agent_message':
         if (msg.agent && msg.message) {
-          const preview = msg.message.substring(0, 100) + (msg.message.length > 100 ? '...' : '')
-          return `${msg.agent}: ${preview}`
+          // Parse the message for richer context
+          const parsed = parseAgentMessage(msg.message, msg.agent)
+          const interactionFlow = formatInteractionFlow(parsed.sender, parsed.recipient)
+          const preview = smartTruncate(msg.message, 250)
+          
+          // Add message type icon if it's a specific type
+          const typeIcon = parsed.messageType !== 'general' ? 
+            getMessageTypeIcon(parsed.messageType) + ' ' : ''
+          
+          // Always show the agent label like [Writer] to match the logs
+          return `[${msg.agent}] ${typeIcon}${interactionFlow} ${preview}`
         }
         break
       case 'status':
@@ -110,3 +125,35 @@ export default function ActivityFeed({ messages, currentActivity }: ActivityFeed
     </div>
   )
 }
+
+export default React.memo(ActivityFeed, (prevProps, nextProps) => {
+  // Check if we actually need to re-render
+  if (prevProps.currentActivity !== nextProps.currentActivity) {
+    return false // Re-render needed
+  }
+  
+  // Compare only the last 10 messages that are displayed
+  const prevDisplayed = prevProps.messages.slice(-10)
+  const nextDisplayed = nextProps.messages.slice(-10)
+  
+  if (prevDisplayed.length !== nextDisplayed.length) {
+    return false // Re-render needed
+  }
+  
+  // Check if any displayed messages have changed
+  for (let i = 0; i < prevDisplayed.length; i++) {
+    const prevMsg = prevDisplayed[i]
+    const nextMsg = nextDisplayed[i]
+    
+    // Compare key properties that would affect display
+    if (prevMsg.type !== nextMsg.type ||
+        prevMsg.agent !== nextMsg.agent ||
+        prevMsg.message !== nextMsg.message ||
+        prevMsg.state !== nextMsg.state ||
+        prevMsg.activity !== nextMsg.activity) {
+      return false // Re-render needed
+    }
+  }
+  
+  return true // No re-render needed
+})

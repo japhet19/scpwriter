@@ -27,6 +27,23 @@
   ```
 - **Key Learning**: Always consider streaming/heavy operation states when designing animations
 
+#### **Problem: Background Not Showing Behind Terminal**
+- **Issue**: Theme background animations not visible behind terminal content
+- **Root Cause**: Missing CSS rule to make `.crt-container` transparent for specific themes
+- **Solution**:
+  ```css
+  /* CRITICAL: Each theme needs this rule to show backgrounds */
+  .theme-cyberpunk .crt-container {
+    background: transparent;
+  }
+  
+  .theme-cyberpunk .terminal-window {
+    background: rgba(10, 0, 20, 0.85); /* Semi-transparent */
+    border: 2px solid rgba(0, 255, 255, 0.6);
+  }
+  ```
+- **Key Learning**: The default `.crt-container` has a radial gradient background that blocks theme backgrounds. Each theme MUST explicitly set `background: transparent` on `.crt-container` to show animated backgrounds
+
 #### **Problem: Z-index Conflicts**
 - **Issue**: Animated elements interfering with terminal content visibility
 - **Root Cause**: Improper layering hierarchy between background animations and UI content

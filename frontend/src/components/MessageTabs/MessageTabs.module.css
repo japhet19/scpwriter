@@ -90,3 +90,54 @@
   height: 400px;
   overflow-y: auto;
 }
+
+/* Mention highlighting */
+.mention {
+  color: var(--terminal-amber);
+  font-weight: bold;
+  background: rgba(255, 176, 0, 0.1);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+/* Story markers */
+.storyMarker {
+  color: var(--terminal-green);
+  font-weight: bold;
+  background: rgba(0, 255, 0, 0.1);
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+
+/* Interaction flow */
+.interactionFlow {
+  color: var(--terminal-blue);
+  font-size: 12px;
+  margin-left: 10px;
+}
+
+/* Turn grouping */
+.turnGroup {
+  margin: 15px 0;
+}
+
+.turnHeader {
+  color: var(--terminal-green);
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 10px;
+}
+
+.turnFooter {
+  color: var(--terminal-green);
+  font-size: 12px;
+  opacity: 0.5;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+/* Message type icon */
+.messageTypeIcon {
+  margin-right: 5px;
+  font-size: 14px;
+}

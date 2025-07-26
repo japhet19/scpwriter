@@ -1,0 +1,336 @@
+/* SCP Theme Options - Industrial Control Panel Styles */
+
+.scp-theme-options {
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.scp-control-row {
+  position: relative;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, 
+    rgba(26, 26, 26, 0.95) 0%, 
+    rgba(10, 10, 10, 0.98) 100%);
+  border: 2px solid #333;
+  border-radius: 0;
+  box-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(100, 100, 100, 0.2);
+}
+
+.scp-control-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    #ffb000 0px,
+    #ffb000 10px,
+    #000 10px,
+    #000 20px
+  );
+  opacity: 0.3;
+}
+
+.scp-control-label {
+  display: block;
+  color: #00ff00;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 0;
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.scp-classification {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #00ff00;
+  padding: 4px 12px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #00ff00;
+  text-transform: uppercase;
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  display: inline-block;
+}
+
+.scp-classification.containment {
+  border-color: #ffb000;
+  color: #ffb000;
+  box-shadow: 0 0 10px rgba(255, 176, 0, 0.3);
+}
+
+.scp-classification.redaction {
+  border-color: #ff0040;
+  color: #ff0040;
+  box-shadow: 0 0 10px rgba(255, 0, 64, 0.3);
+}
+
+.scp-control-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.scp-control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.scp-label {
+  color: #999;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.scp-danger-meter {
+  position: relative;
+  height: 60px;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid #444;
+  border-radius: 0;
+  margin: 10px 0;
+  overflow: hidden;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9);
+}
+
+/* Danger zones for horror level */
+.scp-danger-zones {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.scp-danger-zones .zone {
+  flex: 1;
+  height: 100%;
+  opacity: 0.3;
+}
+
+.scp-danger-zones .zone.safe {
+  background: linear-gradient(to right, #00ff00, #66ff00);
+}
+
+.scp-danger-zones .zone.euclid {
+  background: linear-gradient(to right, #66ff00, #ffb000);
+}
+
+.scp-danger-zones .zone.keter {
+  background: linear-gradient(to right, #ffb000, #ff0040);
+}
+
+.scp-danger-zones .zone.apollyon {
+  background: linear-gradient(to right, #ff0040, #8B0000);
+}
+
+/* Containment zones */
+.scp-containment-zones {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.scp-containment-zones .zone {
+  height: 100%;
+  opacity: 0.4;
+  position: relative;
+}
+
+.scp-containment-zones .zone.safe {
+  width: 20%;
+  background: #00ff00;
+}
+
+.scp-containment-zones .zone.euclid {
+  width: 20%;
+  background: #ffb000;
+}
+
+.scp-containment-zones .zone.keter {
+  width: 20%;
+  background: #ff8800;
+}
+
+.scp-containment-zones .zone.thaumiel {
+  width: 20%;
+  background: #ff0040;
+}
+
+.scp-containment-zones .zone.apollyon {
+  width: 20%;
+  background: #8B0000;
+}
+
+/* SCP slider styling */
+.scp-slider {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+
+/* Danger indicator */
+.scp-danger-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #000;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  transition: left 0.3s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.indicator-light {
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  background: #00ff00;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* Containment breach indicator */
+.scp-containment-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 50px;
+  background: #fff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+  transition: left 0.3s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.breach-light {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background: #ffb000;
+  border-radius: 50%;
+  box-shadow: 0 0 15px #ffb000;
+  animation: breach-pulse 1s ease-in-out infinite;
+}
+
+@keyframes breach-pulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* Redaction preview */
+.scp-redaction-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  padding: 10px;
+  gap: 2px;
+  z-index: 1;
+}
+
+.redaction-bar {
+  flex: 1;
+  background: rgba(50, 50, 50, 0.5);
+  border: 1px solid #222;
+  transition: all 0.3s ease;
+}
+
+.redaction-bar.active {
+  background: #000;
+  border-color: #ff0040;
+  box-shadow: 0 0 5px rgba(255, 0, 64, 0.5);
+}
+
+/* Percentage display */
+.scp-percentage {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid #444;
+  color: #00ff00;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.danger-icon,
+.containment-icon,
+.redaction-icon {
+  font-size: 16px;
+}
+
+/* Hover effects */
+.scp-control-row:hover .scp-classification {
+  box-shadow: 0 0 20px currentColor;
+}
+
+/* Focus styles for accessibility */
+.scp-slider:focus + .scp-danger-indicator,
+.scp-slider:focus + .scp-containment-indicator {
+  box-shadow: 0 0 0 3px rgba(0, 255, 0, 0.5);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .scp-danger-indicator,
+  .scp-containment-indicator,
+  .redaction-bar {
+    transition: none;
+  }
+  
+  .breach-light {
+    animation: none;
+  }
+}
+
+/* Webkit slider thumb styling */
+.scp-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 60px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.scp-slider::-moz-range-thumb {
+  width: 20px;
+  height: 60px;
+  background: transparent;
+  cursor: pointer;
+  border: none;
+}

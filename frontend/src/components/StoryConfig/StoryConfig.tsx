@@ -226,7 +226,7 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
           <button type="submit" className={`terminal-button ${selectedTheme === 'romance' ? 'romance-button' : ''}`}>
             {selectedThemeConfig.formConfig.submitButtonText}
           </button>
-          <button type="button" className={`terminal-button ${selectedTheme === 'romance' ? 'romance-button' : ''}`} onClick={() => window.location.reload()}>
+          <button type="button" className={`terminal-button ${selectedTheme === 'romance' ? 'romance-button' : ''}`} onClick={onChangeTheme}>
             ABORT MISSION
           </button>
         </div>

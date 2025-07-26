@@ -336,6 +336,373 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 182, 193, 0.3);
 }
 
+/* Cyberpunk theme button styling */
+.cyberpunk-button {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
+  border: 2px solid rgba(0, 255, 255, 0.5);
+  color: #00ffff;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  font-family: 'Orbitron', monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+.cyberpunk-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.4), transparent);
+  transition: left 0.5s ease;
+}
+.cyberpunk-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 0, 255, 0.1) 2px,
+    rgba(255, 0, 255, 0.1) 4px
+  );
+  pointer-events: none;
+}
+.cyberpunk-button:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2));
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+  box-shadow: 
+    0 0 20px rgba(0, 255, 255, 0.6),
+    inset 0 0 20px rgba(255, 0, 255, 0.2);
+  transform: translateY(-2px);
+}
+.cyberpunk-button:hover::before {
+  left: 100%;
+}
+.cyberpunk-button:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 0 10px rgba(0, 255, 255, 0.4),
+    inset 0 0 10px rgba(255, 0, 255, 0.3);
+}
+/* Cyberpunk button focus state */
+.cyberpunk-button:focus {
+  outline: none;
+  box-shadow: 
+    0 0 0 3px rgba(0, 255, 255, 0.5),
+    0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+/* Cyberpunk theme terminal transparency */
+.theme-cyberpunk .crt-container {
+  background: transparent;
+}
+
+.theme-cyberpunk .terminal-window {
+  background: rgba(10, 0, 20, 0.85);
+  border: 2px solid rgba(0, 255, 255, 0.6);
+  box-shadow: 0 0 40px rgba(0, 255, 255, 0.3),
+              inset 0 0 20px rgba(255, 0, 128, 0.1);
+}
+
+/* Sci-Fi theme terminal transparency */
+.theme-scifi .crt-container {
+  background: transparent;
+}
+
+.theme-scifi .terminal-window {
+  background: rgba(0, 8, 20, 0.85);
+  border: 2px solid rgba(0, 229, 255, 0.6);
+  box-shadow: 0 0 40px rgba(0, 229, 255, 0.3),
+              inset 0 0 20px rgba(124, 77, 255, 0.1);
+}
+
+/* Sci-Fi theme button styling */
+.scifi-button {
+  background: linear-gradient(135deg, 
+    rgba(0, 229, 255, 0.1) 0%, 
+    rgba(124, 77, 255, 0.1) 100%);
+  border: 2px solid #00e5ff;
+  color: #e0f7fa;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 300;
+}
+
+.scifi-button::before {
+  content: '';
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: 50%;
+  left: 50%;
+  background: radial-gradient(circle, 
+    rgba(100, 255, 218, 0.3) 0%, 
+    transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.5s ease;
+  pointer-events: none;
+}
+
+.scifi-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(100, 255, 218, 0.4), 
+    transparent);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+
+.scifi-button:hover {
+  background: linear-gradient(135deg, 
+    rgba(0, 229, 255, 0.2) 0%, 
+    rgba(124, 77, 255, 0.2) 100%);
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.8);
+  box-shadow: 
+    0 0 30px rgba(0, 229, 255, 0.6),
+    inset 0 0 20px rgba(124, 77, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.scifi-button:hover::before {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.scifi-button:hover::after {
+  left: 100%;
+}
+
+.scifi-button:active {
+  transform: scaleX(1.1) scaleY(0.95);
+  box-shadow: 
+    0 0 40px rgba(0, 229, 255, 0.8),
+    inset 0 0 30px rgba(100, 255, 218, 0.3);
+}
+
+.scifi-button:focus {
+  outline: none;
+  box-shadow: 
+    0 0 0 3px rgba(0, 229, 255, 0.5),
+    0 0 20px rgba(0, 229, 255, 0.3);
+}
+
+/* Noir theme terminal transparency */
+.theme-noir .crt-container {
+  background: transparent;
+}
+
+.theme-noir .terminal-window {
+  background: rgba(10, 10, 10, 0.9);
+  border: 2px solid rgba(232, 232, 232, 0.3);
+  box-shadow: 0 0 30px rgba(139, 0, 0, 0.2),
+              inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* SCP theme terminal transparency */
+.theme-scp .crt-container {
+  background: transparent;
+}
+
+.theme-scp .terminal-window {
+  background: rgba(10, 10, 10, 0.9);
+  border: 2px solid rgba(0, 255, 0, 0.4);
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.2),
+              inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* SCP theme button styling - Industrial control panel */
+.scp-button {
+  background: linear-gradient(135deg, 
+    rgba(26, 26, 26, 0.95) 0%, 
+    rgba(40, 40, 40, 0.9) 100%);
+  border: 3px solid #444;
+  color: #00ff00;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: 700;
+  padding: 10px 20px;
+  box-shadow: 
+    inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+    0 2px 0 rgba(100, 100, 100, 0.3);
+}
+
+.scp-button::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  background: #00ff00;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #00ff00;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.scp-button::after {
+  content: 'SCP-' attr(data-serial);
+  position: absolute;
+  bottom: 2px;
+  right: 5px;
+  font-size: 8px;
+  color: #666;
+  letter-spacing: 1px;
+  opacity: 0.5;
+}
+
+.scp-button:hover {
+  background: linear-gradient(135deg, 
+    rgba(26, 26, 26, 0.95) 0%, 
+    rgba(50, 50, 50, 0.9) 100%);
+  border-color: #00ff00;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+  transform: translateY(-1px);
+  box-shadow: 
+    inset 0 -3px 0 rgba(0, 255, 0, 0.3),
+    0 3px 0 rgba(100, 100, 100, 0.3),
+    0 0 20px rgba(0, 255, 0, 0.2);
+}
+
+.scp-button:hover::before {
+  background: #ffb000;
+  box-shadow: 0 0 15px #ffb000;
+}
+
+.scp-button:active {
+  transform: translateY(1px);
+  box-shadow: 
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(100, 100, 100, 0.3);
+}
+
+.scp-button:active::before {
+  background: #ff0040;
+  box-shadow: 0 0 20px #ff0040;
+}
+
+/* SCP button focus state */
+.scp-button:focus {
+  outline: none;
+  box-shadow: 
+    0 0 0 3px rgba(0, 255, 0, 0.3),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.5),
+    0 2px 0 rgba(100, 100, 100, 0.3);
+}
+
+/* Emergency lockdown style for critical actions */
+.scp-button.emergency {
+  border-color: #ff0040;
+}
+
+.scp-button.emergency::before {
+  background: #ff0040;
+  animation: emergency-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes emergency-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Noir theme button styling */
+.noir-button {
+  background: linear-gradient(135deg, 
+    rgba(26, 26, 26, 0.9) 0%, 
+    rgba(10, 10, 10, 0.95) 100%);
+  border: 2px solid #666666;
+  color: #e8e8e8;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: 'Special Elite', cursive;
+  font-weight: 400;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.noir-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(232, 232, 232, 0.3) 50%, 
+    transparent 100%);
+}
+
+.noir-button::after {
+  content: 'CLASSIFIED';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  font-size: 10px;
+  color: rgba(139, 0, 0, 0.3);
+  letter-spacing: 3px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.noir-button:hover {
+  background: linear-gradient(135deg, 
+    rgba(26, 26, 26, 0.95) 0%, 
+    rgba(139, 0, 0, 0.2) 100%);
+  color: #fff;
+  text-shadow: 0 0 8px rgba(232, 232, 232, 0.5);
+  box-shadow: 
+    0 4px 15px rgba(139, 0, 0, 0.4),
+    inset 0 1px 0 rgba(232, 232, 232, 0.2);
+  transform: translateY(-1px);
+}
+
+.noir-button:hover::after {
+  opacity: 1;
+}
+
+.noir-button:active {
+  transform: translateY(1px);
+  box-shadow: 
+    0 1px 5px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.noir-button:focus {
+  outline: none;
+  box-shadow: 
+    0 0 0 3px rgba(139, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
 /* Input Fields */
 .terminal-input {
   background: transparent;

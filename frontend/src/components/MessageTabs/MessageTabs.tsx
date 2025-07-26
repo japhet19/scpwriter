@@ -3,6 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import ActivityFeed from '@/components/ActivityFeed/ActivityFeed'
 import { AgentMessage } from '@/hooks/useWebSocket'
+import { 
+  parseAgentMessage, 
+  formatInteractionFlow,
+  getMessageTypeIcon 
+} from '@/utils/messageParser'
 import styles from './MessageTabs.module.css'
 
 interface MessageTabsProps {
@@ -30,6 +35,53 @@ export default function MessageTabs({ messages, currentActivity, streamingMessag
     return msg.message || ''
   }
 
+  const highlightMentions = (text: string): React.ReactNode => {
+    // Split by @mentions and highlight them
+    const parts = text.split(/(@(?:Writer|Reader|Expert))/g)
+    
+    return parts.map((part, index) => {
+      if (part.match(/^@(Writer|Reader|Expert)$/)) {
+        return (
+          <span key={index} className={styles.mention}>
+            {part}
+          </span>
+        )
+      }
+      
+      // Also highlight story markers
+      if (part.includes('---BEGIN STORY---') || part.includes('---END STORY---')) {
+        return part.split(/(---(?:BEGIN|END) STORY---)/g).map((subPart, subIndex) => {
+          if (subPart.match(/---(?:BEGIN|END) STORY---/)) {
+            return (
+              <span key={`${index}-${subIndex}`} className={styles.storyMarker}>
+                {subPart}
+              </span>
+            )
+          }
+          return subPart
+        })
+      }
+      
+      return part
+    })
+  }
+
+  const formatLogMessage = (msg: AgentMessage): React.ReactNode => {
+    const content = getFullMessageContent(msg)
+    const parsed = parseAgentMessage(content, msg.agent)
+    
+    return (
+      <>
+        {parsed.messageType !== 'general' && (
+          <span className={styles.messageTypeIcon}>
+            {getMessageTypeIcon(parsed.messageType)}
+          </span>
+        )}
+        <pre>{highlightMentions(content)}</pre>
+      </>
+    )
+  }
+
   return (
     <div className="message-tabs-container">
       <div className="tab-header">
@@ -55,21 +107,51 @@ export default function MessageTabs({ messages, currentActivity, streamingMessag
         <div className="full-log-container">
           <h3>┌─── AGENT CONVERSATION LOG ───────────────────────────┐</h3>
           <div className="full-log-content" ref={fullLogRef}>
-            {messages.map((msg, idx) => (
-              <div key={idx} className="full-log-entry">
-                {msg.agent && (
-                  <div className="log-header">
-                    <span className="log-agent">[{msg.agent}]</span>
-                    {msg.turn && <span className="log-turn">Turn {msg.turn}</span>}
-                    {msg.phase && <span className="log-phase">{msg.phase}</span>}
+            {(() => {
+              let currentTurn = -1
+              const groupedMessages: React.ReactElement[] = []
+              
+              messages.forEach((msg, idx) => {
+                if (msg.type === 'agent_message' && msg.turn && msg.turn !== currentTurn) {
+                  currentTurn = msg.turn
+                  groupedMessages.push(
+                    <div key={`turn-${currentTurn}`} className={styles.turnGroup}>
+                      <div className={styles.turnHeader}>
+                        ┌─ Turn {currentTurn} ─────────────────────
+                      </div>
+                    </div>
+                  )
+                }
+                
+                const parsed = msg.agent ? parseAgentMessage(msg.message || '', msg.agent) : null
+                const interactionFlow = parsed ? formatInteractionFlow(parsed.sender, parsed.recipient) : ''
+                
+                groupedMessages.push(
+                  <div key={idx} className="full-log-entry">
+                    {msg.agent && (
+                      <div className="log-header">
+                        <span className="log-agent">[{msg.agent}]</span>
+                        {interactionFlow && parsed?.recipient && (
+                          <span className={styles.interactionFlow}> → {parsed.recipient}</span>
+                        )}
+                        {msg.phase && <span className="log-phase">{msg.phase}</span>}
+                      </div>
+                    )}
+                    <div className="log-message">
+                      {formatLogMessage(msg)}
+                    </div>
+                    {currentTurn === msg.turn && idx < messages.length - 1 && 
+                     messages[idx + 1]?.turn !== currentTurn && (
+                      <div className={styles.turnFooter}>
+                        └─────────────────────────────────────
+                      </div>
+                    )}
                   </div>
-                )}
-                <div className="log-message">
-                  <pre>{getFullMessageContent(msg)}</pre>
-                </div>
-                <div className="log-divider">─────────────────────────────────────</div>
-              </div>
-            ))}
+                )
+              })
+              
+              return groupedMessages
+            })()}
             {/* Show streaming message at the end */}
             {currentStreamingAgent && streamingMessages[currentStreamingAgent] && (
               <div className="full-log-entry streaming">
@@ -78,7 +160,7 @@ export default function MessageTabs({ messages, currentActivity, streamingMessag
                   <span className="log-status">◉ STREAMING</span>
                 </div>
                 <div className="log-message">
-                  <pre>{streamingMessages[currentStreamingAgent]}<span className="cursor">▊</span></pre>
+                  <pre>{highlightMentions(streamingMessages[currentStreamingAgent])}<span className="cursor">▊</span></pre>
                 </div>
               </div>
             )}

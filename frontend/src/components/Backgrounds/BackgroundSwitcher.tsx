@@ -5,6 +5,9 @@ import { useTheme } from '@/contexts/ThemeContext'
 import StarfieldBackground from './StarfieldBackground'
 import RomanceBackground from './RomanceBackground'
 import FantasyBackground from './FantasyBackground'
+import CyberpunkBackground from './CyberpunkBackground'
+import NoirBackground from './NoirBackground'
+import SCPBackground from './SCPBackground'
 
 interface BackgroundSwitcherProps {
   isStreaming?: boolean
@@ -22,7 +25,7 @@ export default function BackgroundSwitcher({ isStreaming = false }: BackgroundSw
   
   // For themes with special animated backgrounds, keep them
   if (currentTheme.id === 'scifi' && currentTheme.ui.backgroundType === 'starfield') {
-    return <StarfieldBackground />
+    return <StarfieldBackground isStreaming={isStreaming} />
   }
   
   if (currentTheme.id === 'romance' && currentTheme.ui.backgroundType === 'rose-garden') {
@@ -31,6 +34,18 @@ export default function BackgroundSwitcher({ isStreaming = false }: BackgroundSw
   
   if (currentTheme.id === 'fantasy' && currentTheme.ui.backgroundType === 'forest') {
     return <FantasyBackground isStreaming={isStreaming} />
+  }
+  
+  if (currentTheme.id === 'cyberpunk' && currentTheme.ui.backgroundType === 'city-lights') {
+    return <CyberpunkBackground isStreaming={isStreaming} />
+  }
+  
+  if (currentTheme.id === 'noir' && currentTheme.ui.backgroundType === 'rain-window') {
+    return <NoirBackground isStreaming={isStreaming} />
+  }
+  
+  if (currentTheme.id === 'scp' && currentTheme.ui.backgroundType === 'containment-facility') {
+    return <SCPBackground isStreaming={isStreaming} />
   }
   
   // For all other themes, use the actual theme images as backgrounds

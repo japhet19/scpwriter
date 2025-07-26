@@ -13,13 +13,15 @@ export default function CyberpunkOptions({ options, onChange }: CyberpunkOptions
   }
 
   return (
-    <div className={styles.themeOptions}>
+    <div className={`${styles.themeOptions} ${styles.cyberpunkTheme}`}>
       <div className={styles.optionRow}>
-        <span>Tech Level:</span>
-        <div className={styles.sliderContainer}>
+        <span className={styles.cyberpunkLabel}>
+          <span className={styles.neonGlow}>TECH_LEVEL.exe</span>
+        </span>
+        <div className={`${styles.sliderContainer} ${styles.cyberpunkSliderContainer}`}>
           <div className={styles.sliderLabels}>
-            <span className={styles.leftLabel}>Near-Future Limited</span>
-            <span className={styles.rightLabel}>Post-Singularity AI</span>
+            <span className={`${styles.leftLabel} ${styles.cyberpunkLeftLabel}`}>Near-Future Limited</span>
+            <span className={`${styles.rightLabel} ${styles.cyberpunkRightLabel}`}>Post-Singularity AI</span>
           </div>
           <input
             type="range"
@@ -27,21 +29,22 @@ export default function CyberpunkOptions({ options, onChange }: CyberpunkOptions
             max="100"
             value={options.techLevel}
             onChange={(e) => handleSliderChange('techLevel', Number(e.target.value))}
-            className={styles.themeSlider}
-            style={{
-              background: `linear-gradient(to right, var(--terminal-green) 0%, #00BFFF 50%, #FF1493 100%)`
-            }}
+            className={`${styles.themeSlider} ${styles.cyberpunkSlider}`}
           />
-          <span className={styles.sliderValue}>{options.techLevel}%</span>
+          <span className={`${styles.sliderValue} ${styles.cyberpunkValue}`}>
+            [{options.techLevel}%]
+          </span>
         </div>
       </div>
 
       <div className={styles.optionRow}>
-        <span>Dystopia Level:</span>
-        <div className={styles.sliderContainer}>
+        <span className={styles.cyberpunkLabel}>
+          <span className={styles.neonGlow}>DYSTOPIA_LEVEL.exe</span>
+        </span>
+        <div className={`${styles.sliderContainer} ${styles.cyberpunkSliderContainer}`}>
           <div className={styles.sliderLabels}>
-            <span className={styles.leftLabel}>Hopeful Tech Future</span>
-            <span className={styles.rightLabel}>Surveillance State</span>
+            <span className={`${styles.leftLabel} ${styles.cyberpunkLeftLabel}`}>Hopeful Tech Future</span>
+            <span className={`${styles.rightLabel} ${styles.cyberpunkRightLabel}`}>Surveillance State</span>
           </div>
           <input
             type="range"
@@ -49,21 +52,22 @@ export default function CyberpunkOptions({ options, onChange }: CyberpunkOptions
             max="100"
             value={options.dystopiaLevel}
             onChange={(e) => handleSliderChange('dystopiaLevel', Number(e.target.value))}
-            className={styles.themeSlider}
-            style={{
-              background: `linear-gradient(to right, var(--terminal-green) 0%, var(--terminal-amber) 50%, #8B0000 100%)`
-            }}
+            className={`${styles.themeSlider} ${styles.cyberpunkSlider}`}
           />
-          <span className={styles.sliderValue}>{options.dystopiaLevel}%</span>
+          <span className={`${styles.sliderValue} ${styles.cyberpunkValue}`}>
+            [{options.dystopiaLevel}%]
+          </span>
         </div>
       </div>
 
       <div className={styles.optionRow}>
-        <span>Perspective:</span>
-        <div className={styles.sliderContainer}>
+        <span className={styles.cyberpunkLabel}>
+          <span className={styles.neonGlow}>PERSPECTIVE.exe</span>
+        </span>
+        <div className={`${styles.sliderContainer} ${styles.cyberpunkSliderContainer}`}>
           <div className={styles.sliderLabels}>
-            <span className={styles.leftLabel}>Street-Level Criminal</span>
-            <span className={styles.rightLabel}>Corporate Executive</span>
+            <span className={`${styles.leftLabel} ${styles.cyberpunkLeftLabel}`}>Street-Level Criminal</span>
+            <span className={`${styles.rightLabel} ${styles.cyberpunkRightLabel}`}>Corporate Executive</span>
           </div>
           <input
             type="range"
@@ -71,21 +75,22 @@ export default function CyberpunkOptions({ options, onChange }: CyberpunkOptions
             max="100"
             value={options.perspective}
             onChange={(e) => handleSliderChange('perspective', Number(e.target.value))}
-            className={styles.themeSlider}
-            style={{
-              background: `linear-gradient(to right, #800000 0%, var(--terminal-amber) 50%, #4169E1 100%)`
-            }}
+            className={`${styles.themeSlider} ${styles.cyberpunkSlider}`}
           />
-          <span className={styles.sliderValue}>{options.perspective}%</span>
+          <span className={`${styles.sliderValue} ${styles.cyberpunkValue}`}>
+            [{options.perspective}%]
+          </span>
         </div>
       </div>
 
       <div className={styles.optionRow}>
-        <span>Augmentation:</span>
-        <div className={styles.sliderContainer}>
+        <span className={styles.cyberpunkLabel}>
+          <span className={styles.neonGlow}>AUGMENTATION.exe</span>
+        </span>
+        <div className={`${styles.sliderContainer} ${styles.cyberpunkSliderContainer}`}>
           <div className={styles.sliderLabels}>
-            <span className={styles.leftLabel}>Minimal Cybernetics</span>
-            <span className={styles.rightLabel}>Full AI Integration</span>
+            <span className={`${styles.leftLabel} ${styles.cyberpunkLeftLabel}`}>Minimal Cybernetics</span>
+            <span className={`${styles.rightLabel} ${styles.cyberpunkRightLabel}`}>Full AI Integration</span>
           </div>
           <input
             type="range"
@@ -93,12 +98,11 @@ export default function CyberpunkOptions({ options, onChange }: CyberpunkOptions
             max="100"
             value={options.augmentation}
             onChange={(e) => handleSliderChange('augmentation', Number(e.target.value))}
-            className={styles.themeSlider}
-            style={{
-              background: `linear-gradient(to right, var(--terminal-green) 0%, #00BFFF 50%, #FF00FF 100%)`
-            }}
+            className={`${styles.themeSlider} ${styles.cyberpunkSlider}`}
           />
-          <span className={styles.sliderValue}>{options.augmentation}%</span>
+          <span className={`${styles.sliderValue} ${styles.cyberpunkValue}`}>
+            [{options.augmentation}%]
+          </span>
         </div>
       </div>
     </div>
