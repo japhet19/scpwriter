@@ -42,7 +42,10 @@ export default function Terminal({ children, title, showHeader = true }: Termina
       <div className="terminal-window">
         {showHeader && (
           <div className="terminal-header">
-            <div className="terminal-title text-glow">{displayTitle}</div>
+            <div className="terminal-title text-glow">
+              <span className={styles.plotcraftLabel}>PLOTCRAFT &gt; </span>
+              {displayTitle}
+            </div>
             <div className="terminal-status">
               <span>{currentTheme.ui.statusText}</span>
               <span className="alert-amber">{currentTheme.id === 'scp' ? 'LVL-3' : 'ACTIVE'}</span>

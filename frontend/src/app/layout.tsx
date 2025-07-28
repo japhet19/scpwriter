@@ -4,6 +4,8 @@ import "./globals.css";
 import '@/styles/terminal.css'
 import '@/styles/themes.css'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import { AuthProvider } from '@/contexts/AuthContext'
+import Navigation from '@/components/Navigation/Navigation'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Story Writer - Multi-Genre AI Story Creation",
-  description: "Create stories in multiple genres using AI agents",
+  title: "PlotCraft - AI-Powered Story Generation",
+  description: "Create amazing stories with AI agents in multiple genres",
 };
 
 export default function RootLayout({
@@ -30,9 +32,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <Navigation />
+            <main style={{ paddingTop: '66px' }}>
+              {children}
+            </main>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -18,6 +18,47 @@
   animation: fadeInUp 1s ease-out;
 }
 
+.plotcraftBrand {
+  margin-bottom: 30px;
+}
+
+.plotcraftTitle {
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 900;
+  letter-spacing: 8px;
+  margin-bottom: 10px;
+  color: var(--terminal-green);
+  text-shadow: 
+    0 0 20px var(--terminal-green),
+    0 0 40px var(--terminal-green),
+    0 0 60px var(--terminal-green);
+  animation: plotcraftGlow 3s ease-in-out infinite;
+}
+
+@keyframes plotcraftGlow {
+  0%, 100% {
+    text-shadow: 
+      0 0 20px var(--terminal-green),
+      0 0 40px var(--terminal-green),
+      0 0 60px var(--terminal-green);
+  }
+  50% {
+    text-shadow: 
+      0 0 30px var(--terminal-green),
+      0 0 50px var(--terminal-green),
+      0 0 70px var(--terminal-green),
+      0 0 90px var(--terminal-green);
+  }
+}
+
+.plotcraftSubtitle {
+  font-size: 0.9rem;
+  letter-spacing: 3px;
+  color: var(--terminal-amber);
+  opacity: 0.9;
+  font-weight: 500;
+}
+
 .mainTitle {
   font-size: clamp(2.5rem, 8vw, 6rem);
   font-weight: 900;

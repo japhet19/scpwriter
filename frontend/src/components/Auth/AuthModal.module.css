@@ -1,0 +1,177 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background: var(--terminal-bg);
+  border: 2px solid var(--terminal-green);
+  border-radius: 0;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 20px var(--terminal-green);
+  animation: modalAppear 0.3s ease-out;
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--terminal-green);
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--terminal-green);
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: var(--terminal-green);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.closeButton:hover {
+  color: var(--terminal-bright-green);
+  text-shadow: 0 0 10px var(--terminal-green);
+}
+
+.form {
+  padding: 30px 20px;
+}
+
+.field {
+  margin-bottom: 20px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--terminal-green);
+  opacity: 0.8;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px;
+  background: rgba(0, 255, 0, 0.05);
+  border: 1px solid var(--terminal-green);
+  color: var(--terminal-green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.field input:focus {
+  outline: none;
+  background: rgba(0, 255, 0, 0.1);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.field input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field input::placeholder {
+  color: var(--terminal-green);
+  opacity: 0.3;
+}
+
+.error {
+  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid rgba(255, 0, 0, 0.5);
+  color: #ff6666;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 15px;
+  background: var(--terminal-green);
+  color: var(--terminal-bg);
+  border: none;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: var(--terminal-bright-green);
+  box-shadow: 0 0 20px var(--terminal-green);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.footer {
+  padding: 20px;
+  border-top: 1px solid var(--terminal-green);
+  text-align: center;
+}
+
+.footer p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--terminal-green);
+  opacity: 0.8;
+}
+
+.switchButton {
+  background: none;
+  border: none;
+  color: var(--terminal-bright-green);
+  text-decoration: underline;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  margin-left: 5px;
+}
+
+.switchButton:hover {
+  text-shadow: 0 0 5px var(--terminal-green);
+}

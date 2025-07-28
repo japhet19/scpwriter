@@ -19,7 +19,9 @@ export default function BackgroundSwitcher({ isStreaming = false }: BackgroundSw
   // Get theme-specific background image with stable selection per theme
   const backgroundImage = useMemo(() => {
     const imageCount = currentTheme.id === 'cyberpunk' ? 2 : 3
-    const imageIndex = Math.floor(Math.random() * imageCount) + 1
+    // Use theme ID to generate a consistent index instead of random
+    const themeHash = currentTheme.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+    const imageIndex = (themeHash % imageCount) + 1
     return `/images/${currentTheme.id}_${imageIndex}.png`
   }, [currentTheme.id]) // Only recalculate when theme changes
   

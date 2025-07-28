@@ -1,0 +1,301 @@
+/* Navigation Container */
+.navContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+}
+
+.navContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.navBorder {
+  height: 2px;
+  background: var(--terminal-green);
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Scan line effect */
+.navBorder::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(0, 255, 0, 0.8) 50%, 
+    transparent 100%);
+  animation: scanLine 3s linear infinite;
+}
+
+@keyframes scanLine {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Logo Section */
+.logoSection {
+  display: flex;
+  align-items: center;
+}
+
+.logoButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  color: var(--terminal-green);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 8px 0;
+  transition: all 150ms ease;
+}
+
+.logoButton:hover {
+  text-shadow: 0 0 10px var(--terminal-green);
+}
+
+.logoButton:focus {
+  outline: 2px solid var(--terminal-green);
+  outline-offset: 2px;
+}
+
+.logoIcon {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.logoText {
+  animation: typewriter 1s steps(9) forwards;
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 0;
+}
+
+@keyframes typewriter {
+  to { max-width: 150px; }
+}
+
+/* User Section */
+.userSection {
+  display: flex;
+  align-items: center;
+}
+
+.loadingText {
+  color: var(--terminal-amber);
+  font-size: 12px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.3; }
+}
+
+.userMenu {
+  position: relative;
+}
+
+.userButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--terminal-green);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 12px;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+.userButton:hover .username {
+  text-decoration: underline;
+  text-decoration-style: solid;
+  text-underline-offset: 3px;
+}
+
+.userButton:hover .username::after {
+  content: '_';
+  animation: cursorBlink 1s infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.userButton:focus {
+  outline: 2px solid var(--terminal-green);
+  outline-offset: 2px;
+}
+
+.username {
+  color: var(--terminal-green);
+}
+
+.dropdownIcon {
+  font-size: 10px;
+  transition: transform 200ms ease;
+}
+
+.userButton[aria-expanded="true"] .dropdownIcon {
+  transform: rotate(180deg);
+}
+
+/* Sign In Link */
+.signInLink {
+  color: var(--terminal-green);
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid var(--terminal-green);
+  transition: all 150ms ease;
+}
+
+.signInLink:hover {
+  background: rgba(0, 255, 0, 0.1);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.signInLink:focus {
+  outline: 2px solid var(--terminal-green);
+  outline-offset: 2px;
+}
+
+/* Mobile Menu Button */
+.mobileMenuButton {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--terminal-green);
+  font-size: 24px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.mobileMenuButton:hover {
+  text-shadow: 0 0 10px var(--terminal-green);
+}
+
+.mobileMenuButton:focus {
+  outline: 2px solid var(--terminal-green);
+  outline-offset: 2px;
+}
+
+/* Mobile Menu */
+.mobileMenu {
+  position: fixed;
+  top: 66px;
+  right: 0;
+  width: 280px;
+  max-width: 80vw;
+  background: var(--terminal-bg);
+  border: 1px solid var(--terminal-green);
+  border-right: none;
+  box-shadow: -4px 0 20px rgba(0, 255, 0, 0.2);
+  padding: 20px;
+  animation: slideIn 300ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 999;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.mobileUserInfo {
+  color: var(--terminal-green);
+  font-size: 14px;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.mobileMenuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--terminal-green);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 12px 0;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 150ms ease;
+}
+
+.mobileMenuItem:hover {
+  padding-left: 10px;
+  text-shadow: 0 0 5px var(--terminal-green);
+}
+
+.mobileDivider {
+  color: rgba(0, 255, 0, 0.3);
+  margin: 10px 0;
+  font-size: 12px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .navContent {
+    height: 56px;
+    padding: 0 16px;
+  }
+  
+  .logoText {
+    display: none;
+  }
+  
+  .userSection {
+    display: none;
+  }
+  
+  .mobileMenuButton {
+    display: block;
+  }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .navBorder::after,
+  .logoText,
+  .loadingText,
+  .userButton:hover .username::after,
+  .mobileMenu {
+    animation: none;
+  }
+  
+  .mobileMenu {
+    transform: none;
+  }
+}

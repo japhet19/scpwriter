@@ -13,16 +13,25 @@ from typing import Dict, Optional
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv(Path(__file__).parent / '.env')
 
 # Add parent directory to path for imports
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scp_coordinator import SCPCoordinator, StoryConfig
-from utils.text_sanitizer import sanitize_text
+# Import from api.utils specifically
+from api.utils.text_sanitizer import sanitize_text
+from api.utils.encryption import encryptor
+from api.auth import router as auth_router, get_current_user
+from supabase import create_client, Client
 
 # Store active websocket connections
 active_connections: Dict[str, WebSocket] = {}
+
+# Supabase client
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_SERVICE_KEY", os.getenv("SUPABASE_ANON_KEY"))
+supabase: Client = create_client(supabase_url, supabase_key)
 
 def map_agent_name_to_key(agent_name: str, coordinator) -> str:
     """Map theme-specific agent names to standard keys for frontend compatibility."""
@@ -72,6 +81,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include auth router
+app.include_router(auth_router)
+
 @app.get("/")
 async def root():
     return {"message": "SCP Writer API", "status": "operational"}
@@ -81,8 +93,68 @@ async def websocket_generate(websocket: WebSocket):
     await websocket.accept()
     connection_id = id(websocket)
     active_connections[str(connection_id)] = websocket
+    user_id = None
+    user_api_key = None
     
     try:
+        # First message should contain auth token
+        auth_data = await websocket.receive_text()
+        auth_params = json.loads(auth_data)
+        
+        if auth_params.get("type") == "auth":
+            token = auth_params.get("token")
+            if not token:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": "Authentication required"
+                })
+                await websocket.close()
+                return
+            
+            # Verify token and get user
+            try:
+                from jose import jwt
+                payload = jwt.get_unverified_claims(token)
+                user_id = payload.get("sub")
+                
+                if not user_id:
+                    raise Exception("Invalid token")
+                
+                # Get user's OpenRouter API key
+                result = supabase.table("user_api_keys").select("encrypted_key").eq("user_id", user_id).eq("provider", "openrouter").eq("is_active", True).execute()
+                
+                if not result.data:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "Please connect your OpenRouter account first"
+                    })
+                    await websocket.close()
+                    return
+                
+                # Decrypt the API key
+                user_api_key = encryptor.decrypt_api_key(result.data[0]["encrypted_key"])
+                
+                # Send auth success
+                await websocket.send_json({
+                    "type": "auth_success",
+                    "message": "Authentication successful"
+                })
+                
+            except Exception as e:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": f"Authentication failed: {str(e)}"
+                })
+                await websocket.close()
+                return
+        else:
+            await websocket.send_json({
+                "type": "error",
+                "message": "First message must be authentication"
+            })
+            await websocket.close()
+            return
+        
         while True:
             # Receive story parameters
             data = await websocket.receive_text()
@@ -115,8 +187,8 @@ async def websocket_generate(websocket: WebSocket):
                 theme_options=theme_options
             )
             
-            # Create coordinator
-            coordinator = SCPCoordinator(story_config)
+            # Create coordinator with user's API key
+            coordinator = SCPCoordinator(story_config, api_key=user_api_key)
             
             # Debug logging for loaded theme
             print(f"🎯 LOADED THEME: {coordinator.theme.name} (ID: {coordinator.theme.id})")
@@ -247,6 +319,36 @@ async def websocket_generate(websocket: WebSocket):
                 if story_path.exists():
                     story_content = story_path.read_text(encoding='utf-8', errors='replace')
                     
+                    # Save story to database
+                    try:
+                        # Extract title from story (usually first line after #)
+                        lines = story_content.split('\n')
+                        title = "Untitled Story"
+                        for line in lines:
+                            if line.strip().startswith('#') and not line.strip().startswith('##'):
+                                title = line.strip('#').strip()
+                                break
+                        
+                        # Save to database
+                        story_record = supabase.table("stories").insert({
+                            "user_id": user_id,
+                            "title": title,
+                            "theme": ui_theme,
+                            "protagonist_name": protagonist_name,
+                            "content": story_content,
+                            "agent_logs": {
+                                "conversation_history": coordinator.conversation_history,
+                                "turn_count": coordinator.turn_count,
+                                "phases": coordinator.current_phase
+                            },
+                            "model_used": model or "default",
+                            "tokens_used": None  # TODO: Track token usage
+                        }).execute()
+                        
+                        print(f"Story saved to database with ID: {story_record.data[0]['id']}")
+                    except Exception as e:
+                        print(f"Error saving story to database: {e}")
+                    
                     # Send final milestone
                     await websocket.send_json({
                         "type": "agent_update",
@@ -290,4 +392,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)

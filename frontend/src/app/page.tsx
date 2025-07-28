@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Terminal from '@/components/Terminal/Terminal'
 import BootSequence from '@/components/BootSequence/BootSequence'
 import StoryConfig, { StoryConfiguration } from '@/components/StoryConfig/StoryConfig'
@@ -8,28 +9,44 @@ import MessageTabs from '@/components/MessageTabs/MessageTabs'
 import AgentStatusLine from '@/components/AgentStatusLine/AgentStatusLine'
 import WelcomeScreen from '@/components/WelcomeScreen/WelcomeScreen'
 import { useWebSocket } from '@/hooks/useWebSocket'
-import { Howl } from 'howler'
+// import { Howl } from 'howler' // Commented out until sound files are added
 import { SessionMetadata, formatAgentLogs, downloadFile, generateFilename } from '@/utils/logFormatter'
 import BackgroundSwitcher from '@/components/Backgrounds/BackgroundSwitcher'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useAuth } from '@/contexts/AuthContext'
+import AuthModal from '@/components/Auth/AuthModal'
+import OpenRouterConnect from '@/components/Auth/OpenRouterConnect'
+import { createClient } from '@/lib/supabase/client'
 
-// Define sound effects
-const sounds = {
-  boot: new Howl({ src: ['/sounds/boot.mp3'], volume: 0.3 }),
-  keypress: new Howl({ src: ['/sounds/keypress.mp3'], volume: 0.1 }),
-  alert: new Howl({ src: ['/sounds/alert.mp3'], volume: 0.4 }),
-  success: new Howl({ src: ['/sounds/success.mp3'], volume: 0.3 }),
-}
+// Define sound effects (commented out until sound files are added)
+// const sounds = {
+//   boot: new Howl({ src: ['/sounds/boot.mp3'], volume: 0.3 }),
+//   keypress: new Howl({ src: ['/sounds/keypress.mp3'], volume: 0.1 }),
+//   alert: new Howl({ src: ['/sounds/alert.mp3'], volume: 0.4 }),
+//   success: new Howl({ src: ['/sounds/success.mp3'], volume: 0.3 }),
+// }
 
 export default function Home() {
+  // Initialize showWelcome to true to prevent flash of config screen
   const [showWelcome, setShowWelcome] = useState(true)
   const [showBoot, setShowBoot] = useState(false)
   const [currentView, setCurrentView] = useState<'config' | 'generation' | 'complete'>('config')
   const [generatedStory, setGeneratedStory] = useState<string | null>(null)
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null)
   const [showLogFormatMenu, setShowLogFormatMenu] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const sessionStartTimeRef = useRef<Date | null>(null)
   const { currentTheme } = useTheme()
+  const { user, loading: authLoading, hasOpenRouterKey, checkOpenRouterKey } = useAuth()
+  const supabase = createClient()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Auth token getter for WebSocket
+  const getAuthToken = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session?.access_token || null
+  }
   
   const {
     isConnected,
@@ -43,12 +60,55 @@ export default function Home() {
     currentActivity,
     streamingMessages,
     currentStreamingAgent
-  } = useWebSocket()
+  } = useWebSocket('http://127.0.0.1:8000', getAuthToken)
 
   useEffect(() => {
-    // Connect to WebSocket when component mounts
-    connect()
-  }, [connect])
+    // Connect to WebSocket when user is authenticated and has OpenRouter key
+    if (user && hasOpenRouterKey) {
+      connect()
+    }
+  }, [user, hasOpenRouterKey, connect])
+
+  // Set showWelcome based on state - if we're not in config view, hide welcome
+  useEffect(() => {
+    if (!authLoading && user && hasOpenRouterKey) {
+      // Only show welcome if we're in config view and haven't started configuring
+      if (currentView !== 'config') {
+        setShowWelcome(false)
+      }
+    }
+  }, [authLoading, user, hasOpenRouterKey, currentView])
+
+  // Handle navigation to signin
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/signin')
+    }
+  }, [authLoading, user, router])
+  
+  // Handle URL parameters and auth state
+  useEffect(() => {
+    const handleUrlParams = async () => {
+      // Check if we should show theme selection
+      if (searchParams.get('selectTheme') === 'true') {
+        setShowWelcome(true)
+        setCurrentView('config')
+        // Remove the query parameter using Next.js router
+        router.replace('/', undefined, { shallow: true })
+      }
+      
+      // Check for OpenRouter connection
+      if (searchParams.get('openrouter') === 'connected') {
+        // OpenRouter was just connected, refresh the key status
+        await checkOpenRouterKey()
+        // Remove the query parameter using Next.js router
+        router.replace('/', undefined, { shallow: true })
+      }
+      
+      supabase.auth.getSession()
+    }
+    handleUrlParams()
+  }, [searchParams, checkOpenRouterKey, router])
 
   const handleThemeSelect = (themeId: string) => {
     setShowWelcome(false)
@@ -111,10 +171,47 @@ export default function Home() {
     }
   }, [messages])
 
-  if (showWelcome) {
-    return <WelcomeScreen onThemeSelect={handleThemeSelect} />
+  // Check auth state first
+  if (authLoading) {
+    return (
+      <>
+        <BackgroundSwitcher isStreaming={false} />
+        <Terminal>
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <h2>LOADING...</h2>
+          </div>
+        </Terminal>
+      </>
+    )
   }
 
+  // Not authenticated - redirect is handled by useEffect
+  if (!user) {
+    return null
+  }
+
+  // Authenticated but no OpenRouter key
+  if (!hasOpenRouterKey) {
+    return (
+      <>
+        <BackgroundSwitcher isStreaming={false} />
+        <Terminal>
+          <OpenRouterConnect />
+        </Terminal>
+      </>
+    )
+  }
+
+  // Show welcome screen for authenticated users with OpenRouter key
+  if (showWelcome) {
+    return (
+      <>
+        <WelcomeScreen onThemeSelect={handleThemeSelect} />
+      </>
+    )
+  }
+
+  // Show boot sequence after theme selection
   if (showBoot) {
     return (
       <>

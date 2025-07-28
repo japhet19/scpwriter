@@ -51,7 +51,7 @@ class StoryConfig:
 class SCPCoordinator:
     """Coordinates SCP story writing between Writer, Reader, and Writing Expert agents."""
     
-    def __init__(self, story_config: Optional[StoryConfig] = None):
+    def __init__(self, story_config: Optional[StoryConfig] = None, api_key: Optional[str] = None):
         self.agents: Dict[str, BaseAgent] = {}
         self.story_config = story_config or StoryConfig()
         self.theme: StoryTheme = get_theme(self.story_config.theme)
@@ -64,6 +64,7 @@ class SCPCoordinator:
         self.user_request = ""
         self.current_phase = "initialization"
         self.outline_iterations = 0
+        self.api_key = api_key  # Store user's OpenRouter API key
         
     def parse_next_speaker(self, message: str) -> Optional[str]:
         """Extract who should speak next from a message."""
@@ -411,9 +412,9 @@ TECHNICAL QUALITY ASSURANCE (MANDATORY):
 """
         
         self.agents = {
-            "Writer": BaseAgent(self.theme.writer.name, writer_prompt, model=self.story_config.model),
-            "Reader": BaseAgent(self.theme.reader.name, reader_prompt, model=self.story_config.model),
-            "Expert": BaseAgent(self.theme.expert.name, expert_prompt, model=self.story_config.model)
+            "Writer": BaseAgent(self.theme.writer.name, writer_prompt, model=self.story_config.model, api_key=self.api_key),
+            "Reader": BaseAgent(self.theme.reader.name, reader_prompt, model=self.story_config.model, api_key=self.api_key),
+            "Expert": BaseAgent(self.theme.expert.name, expert_prompt, model=self.story_config.model, api_key=self.api_key)
         }
         
         logger.info("All agents initialized successfully")

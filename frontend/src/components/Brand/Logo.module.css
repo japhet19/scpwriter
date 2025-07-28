@@ -1,0 +1,162 @@
+.logo {
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--terminal-green);
+  position: relative;
+  display: inline-block;
+}
+
+/* Full Logo Styles */
+.fullLogo {
+  font-size: 10px;
+  line-height: 1.2;
+  margin: 0;
+  padding: 20px;
+  white-space: pre;
+  overflow: hidden;
+  text-shadow: 0 0 10px var(--terminal-green);
+}
+
+.typing {
+  animation: typewriter 2s steps(50) forwards;
+}
+
+.cursor {
+  animation: blink 1s infinite;
+  color: var(--terminal-green);
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* Compact Logo Styles */
+.compactLogo {
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Icon Logo Styles */
+.iconLogo {
+  font-size: 24px;
+  font-weight: bold;
+  padding: 5px;
+  border: 2px solid var(--terminal-green);
+}
+
+/* Status Logo Styles */
+.statusLogo {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.statusText {
+  color: var(--terminal-amber);
+  animation: statusBlink 2s ease-in-out infinite;
+}
+
+@keyframes statusBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Subtitle Styles */
+.subtitle {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 5px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* Animation Effects */
+.glitch {
+  animation: glitch 2s ease-in-out infinite;
+}
+
+@keyframes glitch {
+  0%, 100% { 
+    text-shadow: 
+      2px 0 var(--terminal-green), 
+      -2px 0 #ff0040;
+    transform: translate(0);
+  }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+}
+
+.pulse {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 0.8;
+    text-shadow: 0 0 10px var(--terminal-green);
+  }
+  50% { 
+    opacity: 1;
+    text-shadow: 0 0 20px var(--terminal-green), 0 0 30px var(--terminal-green);
+  }
+}
+
+/* Theme-specific styles */
+.logo[data-theme="cyberpunk"] {
+  color: #00ffff;
+  text-shadow: 
+    0 0 10px #00ffff,
+    0 0 20px #ff00ff;
+}
+
+.logo[data-theme="fantasy"] {
+  color: #ffd700;
+  text-shadow: 
+    0 0 10px #ffd700,
+    0 0 20px #6b46c1;
+}
+
+.logo[data-theme="noir"] {
+  color: #e8e8e8;
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(139, 0, 0, 0.2);
+}
+
+.logo[data-theme="scifi"] {
+  color: #00e5ff;
+  text-shadow: 
+    0 0 10px #00e5ff,
+    0 0 20px #7c4dff;
+}
+
+.logo[data-theme="romance"] {
+  color: #ff69b4;
+  text-shadow: 
+    0 0 10px #ff69b4,
+    0 0 20px #ff1493;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .fullLogo {
+    font-size: 6px;
+    padding: 10px;
+  }
+  
+  .compactLogo {
+    font-size: 14px;
+  }
+  
+  .iconLogo {
+    font-size: 18px;
+  }
+}

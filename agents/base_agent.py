@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class BaseAgent:
     """Base class for all agents in the SCP writer system using OpenRouter."""
     
-    def __init__(self, name: str, system_prompt: str, orchestrator_callback=None, model: Optional[str] = None):
+    def __init__(self, name: str, system_prompt: str, orchestrator_callback=None, model: Optional[str] = None, api_key: Optional[str] = None):
         self.name = name
         self.system_prompt = system_prompt
         self.conversation_history: List[Dict[str, str]] = []
@@ -28,8 +28,9 @@ class BaseAgent:
         self.orchestrator_callback = orchestrator_callback
         
         # Initialize OpenAI client with OpenRouter configuration
+        # Use provided API key or fall back to environment variable
         self.client = AsyncOpenAI(
-            api_key=os.getenv("OPENROUTER_API_KEY"),
+            api_key=api_key or os.getenv("OPENROUTER_API_KEY"),
             base_url="https://openrouter.ai/api/v1"
         )
         

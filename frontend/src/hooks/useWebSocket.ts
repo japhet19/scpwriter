@@ -29,7 +29,7 @@ export interface AgentStates {
   Expert: 'thinking' | 'writing' | 'waiting'
 }
 
-export function useWebSocket(url: string = 'http://localhost:8000') {
+export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken?: () => Promise<string | null>) {
   const [isConnected, setIsConnected] = useState(false)
   const [messages, setMessages] = useState<AgentMessage[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
@@ -50,13 +50,35 @@ export function useWebSocket(url: string = 'http://localhost:8000') {
 
     const ws = new WebSocket(`${url.replace('http', 'ws')}/ws/generate`)
     
-    ws.onopen = () => {
+    ws.onopen = async () => {
       console.log('WebSocket connected')
+      
+      // Send auth token if available
+      if (getAuthToken) {
+        const token = await getAuthToken()
+        if (token) {
+          ws.send(JSON.stringify({
+            type: 'auth',
+            token: token
+          }))
+        } else {
+          console.error('No auth token available')
+          ws.close()
+          return
+        }
+      }
+      
       setIsConnected(true)
     }
 
     ws.onmessage = (event) => {
       const data: AgentMessage = JSON.parse(event.data)
+      
+      // Handle auth response
+      if (data.type === 'auth_success') {
+        console.log('Authentication successful')
+        return
+      }
       
       setMessages(prev => [...prev, data])
       
@@ -123,12 +145,21 @@ export function useWebSocket(url: string = 'http://localhost:8000') {
     ws.onerror = (error) => {
       console.error('WebSocket error:', error)
       setIsConnected(false)
+      // Add more detailed error logging
+      console.error('WebSocket connection failed. URL:', `${url.replace('http', 'ws')}/ws/generate`)
+      console.error('Make sure the backend server is running on', url)
     }
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       console.log('WebSocket disconnected')
+      console.log('Close event code:', event.code, 'reason:', event.reason)
       setIsConnected(false)
       setIsGenerating(false)
+      
+      // Log specific close reasons
+      if (event.code === 1006) {
+        console.error('WebSocket closed abnormally - server may be down or endpoint may not exist')
+      }
     }
 
     socketRef.current = ws
