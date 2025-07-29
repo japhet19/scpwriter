@@ -23,6 +23,10 @@ function OpenRouterCallbackContent() {
       }
 
       try {
+        console.log('Attempting to exchange code for API key')
+        console.log('Code:', code ? 'Present' : 'Missing')
+        console.log('Code verifier:', codeVerifier ? 'Present' : 'Missing')
+        
         // Exchange code for API key via our backend
         const response = await fetch('/api/auth/openrouter/callback', {
           method: 'POST',
@@ -34,6 +38,8 @@ function OpenRouterCallbackContent() {
             code_verifier: codeVerifier,
           }),
         })
+        
+        console.log('API route response status:', response.status)
 
         if (!response.ok) {
           const errorData = await response.json()

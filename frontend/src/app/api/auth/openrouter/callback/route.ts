@@ -24,7 +24,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Exchange code for API key with OpenRouter
-    const tokenResponse = await fetch('https://openrouter.ai/api/v1/auth/keys', {
+    console.log('Exchanging code with OpenRouter API')
+    const openRouterUrl = 'https://openrouter.ai/api/v1/auth/keys'
+    console.log('OpenRouter URL:', openRouterUrl)
+    
+    const tokenResponse = await fetch(openRouterUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -35,6 +39,9 @@ export async function POST(request: NextRequest) {
         code_challenge_method: 'S256',
       }),
     })
+    
+    console.log('OpenRouter response status:', tokenResponse.status)
+    console.log('OpenRouter response headers:', Object.fromEntries(tokenResponse.headers.entries()))
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text()
