@@ -106,13 +106,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    console.log('=== Google OAuth Debug ===')
+    console.log('Current origin:', window.location.origin)
+    console.log('Current href:', window.location.href)
+    console.log('Redirect URL being sent:', `${window.location.origin}/auth/callback`)
+    
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        skipBrowserRedirect: true, // Temporarily skip auto-redirect to inspect URL
       },
     })
-    if (error) throw error
+    
+    if (error) {
+      console.error('OAuth error:', error)
+      throw error
+    }
+    
+    if (data?.url) {
+      console.log('OAuth URL from Supabase:', data.url)
+      
+      // Parse the URL to check for redirect_uri parameter
+      try {
+        const oauthUrl = new URL(data.url)
+        const redirectUri = oauthUrl.searchParams.get('redirect_uri')
+        console.log('Redirect URI in OAuth URL:', redirectUri)
+        
+        // Check state parameter
+        const state = oauthUrl.searchParams.get('state')
+        if (state) {
+          console.log('OAuth state parameter:', state)
+          try {
+            // State might be base64 encoded
+            const decodedState = atob(state)
+            console.log('Decoded state:', decodedState)
+          } catch (e) {
+            console.log('Could not decode state (not base64)')
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing OAuth URL:', e)
+      }
+      
+      // Show the URL in an alert for easy copying
+      alert(`OAuth URL (check console for details):\n\n${data.url}\n\nClick OK to proceed with sign in.`)
+      
+      // Manually redirect after debugging
+      window.location.href = data.url
+    }
   }
 
   const signInWithMagicLink = async (email: string) => {
