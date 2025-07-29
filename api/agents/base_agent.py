@@ -29,7 +29,11 @@ class BaseAgent:
         # Use provided API key or fall back to environment variable
         self.client = AsyncOpenAI(
             api_key=api_key or os.getenv("OPENROUTER_API_KEY"),
-            base_url="https://openrouter.ai/api/v1"
+            base_url="https://openrouter.ai/api/v1",
+            default_headers={
+                "HTTP-Referer": "https://plotcraft.up.railway.app",
+                "X-Title": "PlotCraft"
+            }
         )
         
         # Use provided model or fall back to environment variable or default
