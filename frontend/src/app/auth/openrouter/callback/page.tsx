@@ -51,7 +51,7 @@ function OpenRouterCallbackContent() {
         sessionStorage.removeItem('openrouter_code_verifier')
 
         // Check that the key was saved and wait for state update
-        const hasKey = await checkOpenRouterKey()
+        await checkOpenRouterKey()
         
         setStatus('success')
         
