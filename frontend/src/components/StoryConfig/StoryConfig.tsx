@@ -14,6 +14,8 @@ import CyberpunkOptions from '@/components/ThemeOptions/CyberpunkOptions'
 import RomanceOptions from '@/components/ThemeOptions/RomanceOptions'
 import NoirOptions from '@/components/ThemeOptions/NoirOptions'
 import SciFiOptions from '@/components/ThemeOptions/SciFiOptions'
+import CostEstimate from '@/components/CostEstimate/CostEstimate'
+import { estimateStoryCost } from '@/utils/costEstimator'
 
 interface StoryConfigProps {
   onSubmit: (config: StoryConfiguration) => void
@@ -38,6 +40,7 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
   const { themeId, currentTheme } = useTheme()
   const [selectedTheme, setSelectedTheme] = useState(themeId)
   const [themeOptions, setThemeOptions] = useState<ThemeOptions>(() => getDefaultThemeOptions(themeId))
+  const [costEstimate, setCostEstimate] = useState<ReturnType<typeof estimateStoryCost>>(null)
   
   // Get the selected theme's configuration
   const selectedThemeConfig = getTheme(selectedTheme)
@@ -46,6 +49,15 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
   useEffect(() => {
     setThemeOptions(getDefaultThemeOptions(selectedTheme))
   }, [selectedTheme])
+
+  // Update cost estimate when model or pages change
+  useEffect(() => {
+    const model = getModelById(selectedModel)
+    if (model) {
+      const estimate = estimateStoryCost(model, pages)
+      setCostEstimate(estimate)
+    }
+  }, [selectedModel, pages])
 
   // Render the appropriate theme options component
   const renderThemeOptions = () => {
@@ -215,6 +227,7 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
               })()}
             </div>
           </div>
+          <CostEstimate estimate={costEstimate} />
         </div>
 
         <div className={styles.formGroup}>

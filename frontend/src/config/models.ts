@@ -7,6 +7,8 @@ export interface ModelInfo {
   costLevel: 1 | 2 | 3 // 1 = low cost (💰), 2 = medium (💰💰), 3 = high (💰💰💰)
   recommended?: boolean
   available?: boolean
+  inputCostPerMillion?: number  // Cost per million input tokens in USD
+  outputCostPerMillion?: number // Cost per million output tokens in USD
 }
 
 export interface ModelCategory {
@@ -28,7 +30,9 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         contextLength: 200000,
         costLevel: 3,
         recommended: true,
-        available: true
+        available: true,
+        inputCostPerMillion: 100.0,
+        outputCostPerMillion: 100.0
       },
       {
         id: "anthropic/claude-sonnet-4",
@@ -38,7 +42,9 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         contextLength: 200000,
         costLevel: 3,
         recommended: true,
-        available: true
+        available: true,
+        inputCostPerMillion: 25.0,
+        outputCostPerMillion: 125.0
       },
       {
         id: "anthropic/claude-3.5-sonnet",
@@ -47,7 +53,9 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         description: "Previous generation - still excellent for creative tasks",
         contextLength: 200000,
         costLevel: 2,
-        available: true
+        available: true,
+        inputCostPerMillion: 3.0,
+        outputCostPerMillion: 15.0
       },
       {
         id: "anthropic/claude-3-opus-20240229",
@@ -56,7 +64,9 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         description: "Powerful model with strong reasoning capabilities",
         contextLength: 200000,
         costLevel: 2,
-        available: true
+        available: true,
+        inputCostPerMillion: 15.0,
+        outputCostPerMillion: 75.0
       }
     ]
   },
@@ -80,7 +90,9 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         description: "Optimized GPT-4 for faster responses",
         contextLength: 128000,
         costLevel: 2,
-        available: true
+        available: true,
+        inputCostPerMillion: 2.5,
+        outputCostPerMillion: 10.0
       },
       {
         id: "openai/gpt-4o-mini",
@@ -89,7 +101,9 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         description: "Smaller, faster version of GPT-4o",
         contextLength: 128000,
         costLevel: 1,
-        available: true
+        available: true,
+        inputCostPerMillion: 0.15,
+        outputCostPerMillion: 0.60
       },
       {
         id: "openai/gpt-4-turbo",
@@ -140,7 +154,9 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         description: "Most capable Gemini model with massive context",
         contextLength: 1000000,
         costLevel: 2,
-        available: true
+        available: true,
+        inputCostPerMillion: 1.25,
+        outputCostPerMillion: 10.0
       },
       {
         id: "google/gemini-2.5-flash",
@@ -150,7 +166,9 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         contextLength: 1000000,
         costLevel: 1,
         recommended: true,
-        available: true
+        available: true,
+        inputCostPerMillion: 0.30,
+        outputCostPerMillion: 2.50
       },
       {
         id: "google/gemini-pro-1.5",
@@ -159,7 +177,9 @@ export const MODEL_CATEGORIES: ModelCategory[] = [
         description: "Previous generation Gemini Pro",
         contextLength: 1000000,
         costLevel: 1,
-        available: true
+        available: true,
+        inputCostPerMillion: 1.25,
+        outputCostPerMillion: 10.0
       }
     ]
   },
