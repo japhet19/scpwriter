@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Terminal from '@/components/Terminal/Terminal'
 import BootSequence from '@/components/BootSequence/BootSequence'
@@ -27,7 +27,7 @@ import { API_URL } from '@/config/api'
 //   success: new Howl({ src: ['/sounds/success.mp3'], volume: 0.3 }),
 // }
 
-export default function Home() {
+function HomeContent() {
   // Initialize showWelcome to true to prevent flash of config screen
   const [showWelcome, setShowWelcome] = useState(true)
   const [showBoot, setShowBoot] = useState(false)
@@ -1937,5 +1937,22 @@ export default function Home() {
       `}</style>
       </Terminal>
     </>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <>
+        <BackgroundSwitcher isStreaming={false} />
+        <Terminal>
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <h2>LOADING...</h2>
+          </div>
+        </Terminal>
+      </>
+    }>
+      <HomeContent />
+    </Suspense>
   )
 }
