@@ -6,6 +6,17 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code')
   const next = requestUrl.searchParams.get('next') ?? '/'
 
+  // Get the correct origin, accounting for proxies/load balancers
+  // Railway (and other platforms) set x-forwarded-host with the actual public hostname
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  
+  // Use the forwarded host if available, otherwise fall back to the Host header
+  // This prevents using the internal container URL (localhost:8080)
+  const origin = forwardedHost 
+    ? `${forwardedProto}://${forwardedHost}`
+    : `${forwardedProto}://${request.headers.get('host')}`
+
   if (code) {
     const supabase = await createClient()
     
@@ -13,14 +24,15 @@ export async function GET(request: Request) {
     
     if (error) {
       console.error('Error exchanging code for session:', error)
-      return NextResponse.redirect(`${requestUrl.origin}/signin?error=auth_callback_error`)
+      return NextResponse.redirect(`${origin}/signin?error=auth_callback_error`)
     }
     
-    // Check if user has OpenRouter key to determine redirect
+    // Redirect to home after successful authentication
     const { data: { user } } = await supabase.auth.getUser()
     
     if (user) {
-      const { data: hasKey } = await supabase
+      // Check if user has OpenRouter key (for future use if needed)
+      await supabase
         .from('user_api_keys')
         .select('id')
         .eq('user_id', user.id)
@@ -28,11 +40,11 @@ export async function GET(request: Request) {
         .eq('is_active', true)
         .single()
       
-      // Redirect to home if has key, otherwise will show OpenRouter connect
-      return NextResponse.redirect(`${requestUrl.origin}${next}`)
+      // Redirect to home - the page will check for OpenRouter key and show appropriate UI
+      return NextResponse.redirect(`${origin}${next}`)
     }
   }
 
   // Return to signin if no code
-  return NextResponse.redirect(`${requestUrl.origin}/signin`)
+  return NextResponse.redirect(`${origin}/signin`)
 }
