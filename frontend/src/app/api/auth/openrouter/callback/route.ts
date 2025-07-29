@@ -58,22 +58,36 @@ export async function POST(request: NextRequest) {
     }
 
     const { key } = await tokenResponse.json()
+    console.log('Got API key from OpenRouter:', key ? 'Key received' : 'No key received')
 
     // Call the backend to encrypt and store the key
-    const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/openrouter/store-key`, {
+    const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/auth/openrouter/store-key`
+    console.log('Calling backend URL:', backendUrl)
+    
+    const session = await supabase.auth.getSession()
+    console.log('Session exists:', !!session.data.session)
+    
+    const backendResponse = await fetch(backendUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        'Authorization': `Bearer ${session.data.session?.access_token}`,
       },
       body: JSON.stringify({
         api_key: key,
       }),
     })
+    
+    console.log('Backend response status:', backendResponse.status)
 
     if (!backendResponse.ok) {
       const errorData = await backendResponse.text()
-      console.error('Failed to store API key:', errorData)
+      console.error('Failed to store API key:', {
+        status: backendResponse.status,
+        statusText: backendResponse.statusText,
+        body: errorData,
+        url: backendUrl
+      })
       return NextResponse.json(
         { error: 'Failed to store API key' },
         { status: 500 }
