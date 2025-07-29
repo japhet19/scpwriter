@@ -96,7 +96,7 @@ export default function Home() {
         setShowWelcome(true)
         setCurrentView('config')
         // Remove the query parameter using Next.js router
-        router.replace('/', undefined, { shallow: true })
+        router.replace('/')
       }
       
       // Check for OpenRouter connection
@@ -104,7 +104,7 @@ export default function Home() {
         // OpenRouter was just connected, refresh the key status
         await checkOpenRouterKey()
         // Remove the query parameter using Next.js router
-        router.replace('/', undefined, { shallow: true })
+        router.replace('/')
       }
       
       supabase.auth.getSession()
