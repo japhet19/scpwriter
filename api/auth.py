@@ -186,11 +186,19 @@ async def unlink_openrouter(
 ):
     """Unlink OpenRouter account by deactivating the stored API key"""
     try:
+        print(f"Unlinking OpenRouter for user: {user_id}")
+        
+        # First, check if user has an active key
+        check_result = supabase.table("user_api_keys").select("*").eq("user_id", user_id).eq("provider", "openrouter").eq("is_active", True).execute()
+        print(f"Active keys found: {len(check_result.data) if check_result.data else 0}")
+        
         # Find and deactivate the user's OpenRouter key
         result = supabase.table("user_api_keys").update({
             "is_active": False,
             "updated_at": datetime.utcnow().isoformat()
         }).eq("user_id", user_id).eq("provider", "openrouter").eq("is_active", True).execute()
+        
+        print(f"Update result: {result.data}")
         
         if not result.data:
             raise HTTPException(

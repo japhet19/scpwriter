@@ -195,7 +195,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.message || 'Failed to unlink OpenRouter account')
+      throw new Error(error.error || error.message || 'Failed to unlink OpenRouter account')
     }
     
     // Update local state

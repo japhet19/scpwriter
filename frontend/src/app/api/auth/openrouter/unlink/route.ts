@@ -24,15 +24,22 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Call the backend to unlink OpenRouter
-    const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/openrouter/key`, {
+    console.log('Calling backend to unlink OpenRouter for user:', user.id)
+    const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/auth/openrouter/key`
+    console.log('Backend URL:', backendUrl)
+    
+    const backendResponse = await fetch(backendUrl, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,
       },
     })
 
+    console.log('Backend response status:', backendResponse.status)
+
     if (!backendResponse.ok) {
       const errorData = await backendResponse.json()
+      console.error('Backend error response:', errorData)
       return NextResponse.json(
         { error: errorData.detail || 'Failed to unlink OpenRouter account' },
         { status: backendResponse.status }
