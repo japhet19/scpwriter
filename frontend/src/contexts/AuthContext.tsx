@@ -107,13 +107,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Helper function to clear all OAuth state
   const clearOAuthState = async () => {
-    console.log('=== Clearing OAuth State ===')
-    
     // Clear localStorage
     const localStorageKeys = Object.keys(localStorage)
     localStorageKeys.forEach(key => {
       if (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')) {
-        console.log('Removing localStorage:', key)
         localStorage.removeItem(key)
       }
     })
@@ -122,7 +119,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const sessionStorageKeys = Object.keys(sessionStorage)
     sessionStorageKeys.forEach(key => {
       if (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')) {
-        console.log('Removing sessionStorage:', key)
         sessionStorage.removeItem(key)
       }
     })
@@ -130,9 +126,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Try to sign out globally (this might fail if not signed in, which is ok)
     try {
       await supabase.auth.signOut({ scope: 'global' })
-      console.log('Global sign out completed')
     } catch (e) {
-      console.log('Sign out skipped (probably not signed in):', e)
+      // Ignore error - user might not be signed in
     }
     
     // Clear any cookies we can access (limited by browser security)
@@ -145,16 +140,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.railway.app`
       }
     })
-    
-    console.log('OAuth state clearing completed')
   }
 
   const signInWithGoogle = async () => {
-    console.log('=== Google OAuth Debug ===')
-    console.log('Current origin:', window.location.origin)
-    console.log('Current href:', window.location.href)
-    
-    // Clear all OAuth state before starting
+    // Clear all OAuth state before starting to ensure fresh session
     await clearOAuthState()
     
     // Add a small delay to ensure clearing is complete
@@ -163,52 +152,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Add timestamp to prevent any URL caching
     const timestamp = Date.now()
     const redirectUrl = `${window.location.origin}/auth/callback?t=${timestamp}`
-    console.log('Redirect URL being sent:', redirectUrl)
     
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: redirectUrl,
-        skipBrowserRedirect: true, // Temporarily skip auto-redirect to inspect URL
       },
     })
     
-    if (error) {
-      console.error('OAuth error:', error)
-      throw error
-    }
-    
-    if (data?.url) {
-      console.log('OAuth URL from Supabase:', data.url)
-      
-      // Parse the URL to check for redirect_uri parameter
-      try {
-        const oauthUrl = new URL(data.url)
-        const redirectUri = oauthUrl.searchParams.get('redirect_uri')
-        console.log('Redirect URI in OAuth URL:', redirectUri)
-        
-        // Check state parameter
-        const state = oauthUrl.searchParams.get('state')
-        if (state) {
-          console.log('OAuth state parameter:', state)
-          try {
-            // State might be base64 encoded
-            const decodedState = atob(state)
-            console.log('Decoded state:', decodedState)
-          } catch (e) {
-            console.log('Could not decode state (not base64)')
-          }
-        }
-      } catch (e) {
-        console.error('Error parsing OAuth URL:', e)
-      }
-      
-      // Show the URL in an alert for easy copying
-      alert(`OAuth URL (check console for details):\n\n${data.url}\n\nClick OK to proceed with sign in.`)
-      
-      // Manually redirect after debugging
-      window.location.href = data.url
-    }
+    if (error) throw error
   }
 
   const signInWithMagicLink = async (email: string) => {
