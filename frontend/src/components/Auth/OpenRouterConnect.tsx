@@ -25,6 +25,7 @@ export default function OpenRouterConnect() {
   }
 
   const handleConnect = async () => {
+    console.log('OpenRouter connect button clicked!')
     setLoading(true)
     
     try {
