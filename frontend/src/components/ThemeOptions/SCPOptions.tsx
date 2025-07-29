@@ -1,6 +1,6 @@
 import React from 'react'
 import styles from './ThemeOptions.module.css'
-import { SCPOptions } from '@/types/themeOptions'
+import type { SCPOptions } from '@/types/themeOptions'
 import './SCPOptions.css'
 
 interface SCPOptionsProps {

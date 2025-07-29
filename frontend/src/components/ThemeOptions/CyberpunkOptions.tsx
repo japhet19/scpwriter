@@ -1,6 +1,6 @@
 import React from 'react'
 import styles from './ThemeOptions.module.css'
-import { CyberpunkOptions } from '@/types/themeOptions'
+import type { CyberpunkOptions } from '@/types/themeOptions'
 
 interface CyberpunkOptionsProps {
   options: CyberpunkOptions

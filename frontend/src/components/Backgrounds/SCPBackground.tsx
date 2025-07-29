@@ -37,7 +37,7 @@ interface WarningLight {
 export default function SCPBackground({ isStreaming = false }: SCPBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const gridCanvasRef = useRef<HTMLCanvasElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number>(0)
   const documentsRef = useRef<RedactedDocument[]>([])
   const camerasRef = useRef<SecurityCamera[]>([])
   const lightsRef = useRef<WarningLight[]>([])

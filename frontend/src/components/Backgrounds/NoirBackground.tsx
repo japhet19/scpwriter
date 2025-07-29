@@ -43,7 +43,7 @@ interface Building {
 
 export default function NoirBackground({ isStreaming = false }: NoirBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number>(0)
   const dropsRef = useRef<RainDrop[]>([])
   const smokeRef = useRef<SmokeParticle[]>([])
   const lightsRef = useRef<WindowLight[]>([])

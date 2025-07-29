@@ -1,6 +1,6 @@
 import React from 'react'
 import styles from './ThemeOptions.module.css'
-import { RomanceOptions } from '@/types/themeOptions'
+import type { RomanceOptions } from '@/types/themeOptions'
 
 interface RomanceOptionsProps {
   options: RomanceOptions

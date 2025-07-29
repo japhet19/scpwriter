@@ -1,6 +1,6 @@
 import React from 'react'
 import styles from './ThemeOptions.module.css'
-import { SciFiOptions } from '@/types/themeOptions'
+import type { SciFiOptions } from '@/types/themeOptions'
 
 interface SciFiOptionsProps {
   options: SciFiOptions

@@ -32,7 +32,7 @@ const NEON_COLORS = ['#00ffff', '#ff00ff', '#ff0080', '#00ff88', '#8000ff']
 
 export default function CyberpunkBackground({ isStreaming = false }: CyberpunkBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const animationRef = useRef<number>()
+  const animationRef = useRef<number>(0)
   const dropsRef = useRef<DigitalRainDrop[]>([])
   const particlesRef = useRef<NeonParticle[]>([])
   const mouseRef = useRef({ x: 0, y: 0 })

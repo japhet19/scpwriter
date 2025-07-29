@@ -1,6 +1,6 @@
 import React from 'react'
 import styles from './ThemeOptions.module.css'
-import { NoirOptions } from '@/types/themeOptions'
+import type { NoirOptions } from '@/types/themeOptions'
 import './NoirOptions.css'
 
 interface NoirOptionsProps {
