@@ -20,7 +20,7 @@ export default function SignInPage() {
   const [success, setSuccess] = useState('')
   const [statusMessages, setStatusMessages] = useState<string[]>([])
   
-  const { signIn, signUp, signInWithGoogle, signInWithMagicLink, user } = useAuth()
+  const { signIn, signUp, /* signInWithGoogle, */ signInWithMagicLink, user } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -66,6 +66,7 @@ export default function SignInPage() {
     }
   }
 
+  /* Temporarily disabled while awaiting Google OAuth verification
   const handleGoogleSignIn = async () => {
     setError('')
     setLoading(true)
@@ -80,6 +81,7 @@ export default function SignInPage() {
       setLoading(false)
     }
   }
+  */
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -233,6 +235,9 @@ export default function SignInPage() {
             </div>
             
             <div className={styles.alternativeAuth}>
+              {/* Google Auth temporarily disabled while awaiting OAuth app verification
+                  to prevent exposing internal Supabase domain names to users.
+                  Re-enable after Google verification is complete.
               <button 
                 className={styles.googleButton}
                 onClick={handleGoogleSignIn}
@@ -241,6 +246,7 @@ export default function SignInPage() {
               >
                 <span className={styles.googleIcon}>[G]</span> GOOGLE AUTHENTICATION
               </button>
+              */}
               
               {mode !== 'magiclink' && (
                 <button 
