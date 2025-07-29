@@ -179,3 +179,31 @@ async def check_openrouter_key(user_id: str = Depends(get_current_user)):
     except Exception as e:
         print(f"Error checking key: {e}")
         return {"has_key": False}
+
+@router.delete("/openrouter/key", response_model=OpenRouterKeyResponse)
+async def unlink_openrouter(
+    user_id: str = Depends(get_current_user)
+):
+    """Unlink OpenRouter account by deactivating the stored API key"""
+    try:
+        # Find and deactivate the user's OpenRouter key
+        result = supabase.table("user_api_keys").update({
+            "is_active": False,
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("user_id", user_id).eq("provider", "openrouter").eq("is_active", True).execute()
+        
+        if not result.data:
+            raise HTTPException(
+                status_code=404,
+                detail="No active OpenRouter key found for this user"
+            )
+        
+        return OpenRouterKeyResponse(
+            success=True,
+            message="OpenRouter account unlinked successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to unlink OpenRouter account: {str(e)}")

@@ -15,6 +15,7 @@ interface AuthContextType {
   signOut: () => Promise<void>
   hasOpenRouterKey: boolean
   checkOpenRouterKey: () => Promise<boolean>
+  unlinkOpenRouter: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -179,6 +180,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/')
   }
 
+  const unlinkOpenRouter = async () => {
+    if (!user) throw new Error('User not authenticated')
+    
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('No active session')
+    
+    const response = await fetch('/api/auth/openrouter/unlink', {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to unlink OpenRouter account')
+    }
+    
+    // Update local state
+    setHasOpenRouterKey(false)
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -191,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut,
         hasOpenRouterKey,
         checkOpenRouterKey,
+        unlinkOpenRouter,
       }}
     >
       {children}
