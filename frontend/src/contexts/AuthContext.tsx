@@ -105,16 +105,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error
   }
 
+  // Helper function to clear all OAuth state
+  const clearOAuthState = async () => {
+    console.log('=== Clearing OAuth State ===')
+    
+    // Clear localStorage
+    const localStorageKeys = Object.keys(localStorage)
+    localStorageKeys.forEach(key => {
+      if (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')) {
+        console.log('Removing localStorage:', key)
+        localStorage.removeItem(key)
+      }
+    })
+    
+    // Clear sessionStorage
+    const sessionStorageKeys = Object.keys(sessionStorage)
+    sessionStorageKeys.forEach(key => {
+      if (key.startsWith('sb-') || key.includes('supabase') || key.includes('auth')) {
+        console.log('Removing sessionStorage:', key)
+        sessionStorage.removeItem(key)
+      }
+    })
+    
+    // Try to sign out globally (this might fail if not signed in, which is ok)
+    try {
+      await supabase.auth.signOut({ scope: 'global' })
+      console.log('Global sign out completed')
+    } catch (e) {
+      console.log('Sign out skipped (probably not signed in):', e)
+    }
+    
+    // Clear any cookies we can access (limited by browser security)
+    document.cookie.split(";").forEach(cookie => {
+      const eqPos = cookie.indexOf("=")
+      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim()
+      if (name.includes('sb-') || name.includes('supabase')) {
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.supabase.co`
+        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=.railway.app`
+      }
+    })
+    
+    console.log('OAuth state clearing completed')
+  }
+
   const signInWithGoogle = async () => {
     console.log('=== Google OAuth Debug ===')
     console.log('Current origin:', window.location.origin)
     console.log('Current href:', window.location.href)
-    console.log('Redirect URL being sent:', `${window.location.origin}/auth/callback`)
+    
+    // Clear all OAuth state before starting
+    await clearOAuthState()
+    
+    // Add a small delay to ensure clearing is complete
+    await new Promise(resolve => setTimeout(resolve, 100))
+    
+    // Add timestamp to prevent any URL caching
+    const timestamp = Date.now()
+    const redirectUrl = `${window.location.origin}/auth/callback?t=${timestamp}`
+    console.log('Redirect URL being sent:', redirectUrl)
     
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectUrl,
         skipBrowserRedirect: true, // Temporarily skip auto-redirect to inspect URL
       },
     })
