@@ -18,12 +18,15 @@ logger = logging.getLogger(__name__)
 class BaseAgent:
     """Base class for all agents in the SCP writer system using OpenRouter."""
     
-    def __init__(self, name: str, system_prompt: str, orchestrator_callback=None, model: Optional[str] = None, api_key: Optional[str] = None):
+    def __init__(self, name: str, system_prompt: str, orchestrator_callback=None, model: Optional[str] = None, 
+                 api_key: Optional[str] = None, session_manager=None, session_id: Optional[str] = None):
         self.name = name
         self.system_prompt = system_prompt
         self.conversation_history: List[Dict[str, str]] = []
         self.logger = logging.getLogger(f"agent.{name}")
         self.orchestrator_callback = orchestrator_callback
+        self.session_manager = session_manager
+        self.session_id = session_id
         
         # Initialize OpenAI client with OpenRouter configuration
         # Use provided API key or fall back to environment variable
@@ -46,11 +49,11 @@ class BaseAgent:
         """Generate a formatted timestamp for messages."""
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    def _read_discussion_file(self) -> str:
-        """Read the current discussion file contents."""
-        discussion_path = Path("discussions/story_discussion.md")
-        if discussion_path.exists():
-            return discussion_path.read_text(encoding='utf-8', errors='replace')
+    def _read_discussion_content(self) -> str:
+        """Read the current discussion content from session."""
+        if self.session_manager and self.session_id:
+            draft = self.session_manager.get_latest_draft(self.session_id)
+            return draft or ""
         return ""
     
     def _read_output_file(self) -> str:
@@ -61,18 +64,23 @@ class BaseAgent:
         return ""
     
     async def _append_to_discussion(self, message: str):
-        """Append a message to the discussion file."""
-        discussion_path = Path("discussions/story_discussion.md")
-        timestamp = self._format_timestamp()
-        
-        # Sanitize the message before writing
-        sanitized_message = sanitize_text(message)
-        formatted_message = f"\n## [{self.name}] - [{timestamp}]\n{sanitized_message}\n---\n"
-        
-        with open(discussion_path, 'a', encoding='utf-8') as f:
-            f.write(formatted_message)
-        
-        self.logger.info(f"Appended message to discussion file")
+        """Append a message to the discussion via session manager."""
+        if self.session_manager and self.session_id:
+            # Sanitize the message before saving
+            sanitized_message = sanitize_text(message)
+            
+            # Get current draft and append new message
+            current_draft = self.session_manager.get_latest_draft(self.session_id) or ""
+            timestamp = self._format_timestamp()
+            
+            # Format and append message
+            formatted_message = f"\n## [{self.name}] - [{timestamp}]\n{sanitized_message}\n---\n"
+            
+            new_content = current_draft + formatted_message
+            
+            # Save updated draft
+            await self.session_manager.save_draft(self.session_id, new_content)
+            self.logger.info(f"Appended message to session {self.session_id}")
     
     def _build_messages(self, trigger_message: str, include_output: bool = False) -> List[Dict[str, str]]:
         """Build the message history for the API call."""
@@ -89,7 +97,7 @@ class BaseAgent:
             messages.append(msg)
         
         # Build context from discussion and optionally output file
-        discussion_content = self._read_discussion_file()
+        discussion_content = self._read_discussion_content()
         context = f"Current discussion:\n{discussion_content}"
         
         if include_output:

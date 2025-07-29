@@ -396,9 +396,12 @@ TECHNICAL QUALITY ASSURANCE (MANDATORY):
 """
         
         self.agents = {
-            "Writer": BaseAgent("Writer", writer_prompt, model=self.story_config.model, api_key=self.api_key),
-            "Reader": BaseAgent("Reader", reader_prompt, model=self.story_config.model, api_key=self.api_key),
-            "Expert": BaseAgent("Expert", expert_prompt, model=self.story_config.model, api_key=self.api_key)
+            "Writer": BaseAgent("Writer", writer_prompt, model=self.story_config.model, api_key=self.api_key, 
+                               session_manager=self.session_manager, session_id=self.session_id),
+            "Reader": BaseAgent("Reader", reader_prompt, model=self.story_config.model, api_key=self.api_key,
+                               session_manager=self.session_manager, session_id=self.session_id),
+            "Expert": BaseAgent("Expert", expert_prompt, model=self.story_config.model, api_key=self.api_key,
+                               session_manager=self.session_manager, session_id=self.session_id)
         }
         
         logger.info("All agents initialized successfully")
