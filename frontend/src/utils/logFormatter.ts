@@ -8,6 +8,7 @@ export interface SessionMetadata {
   endTime?: Date
   totalMessages: number
   totalTurns: number
+  sessionId?: string
 }
 
 export interface ExportOptions {

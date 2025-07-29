@@ -7,8 +7,6 @@ import os
 import re
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-import sys
-sys.path.append(str(Path(__file__).parent.parent))
 from utils.text_sanitizer import sanitize_text
 
 # Load environment variables

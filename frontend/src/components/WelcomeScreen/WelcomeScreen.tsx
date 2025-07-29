@@ -71,11 +71,9 @@ export default function WelcomeScreen({ onThemeSelect }: WelcomeScreenProps) {
                   <h3 className={styles.themeName}>{theme.name}</h3>
                   <p className={styles.themeDescription}>{theme.description}</p>
                   <div className={styles.agentTeam}>
-                    <small>Agent Team:</small>
+                    <small>Agent System:</small>
                     <div className={styles.agentNames}>
-                      <span>{theme.agents.writer}</span>
-                      <span>{theme.agents.reader}</span>
-                      <span>{theme.agents.expert}</span>
+                      <span>Writer • Reader • Expert</span>
                     </div>
                   </div>
                 </div>

@@ -15,7 +15,7 @@ load_dotenv(Path(__file__).parent / '.env')
 from jose import jwt, JWTError
 from datetime import datetime
 
-from .utils.encryption import encryptor
+from utils.encryption import encryptor
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

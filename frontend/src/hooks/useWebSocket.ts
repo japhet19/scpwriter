@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client'
 import { ThemeOptions } from '@/types/themeOptions'
 
 export interface AgentMessage {
-  type: 'status' | 'agent_message' | 'completed' | 'error' | 'agent_update' | 'agent_stream_chunk'
+  type: 'status' | 'agent_message' | 'completed' | 'error' | 'agent_update' | 'agent_stream_chunk' | 'session_created' | 'auth_success'
   agent?: string
   message: string
   turn?: number
@@ -12,6 +12,7 @@ export interface AgentMessage {
   state?: 'thinking' | 'writing' | 'waiting'
   activity?: string
   chunk?: string
+  session_id?: string
 }
 
 export interface StoryGenerationParams {
@@ -35,6 +36,7 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
   const [isGenerating, setIsGenerating] = useState(false)
   const [currentAgent, setCurrentAgent] = useState<string | null>(null)
   const [currentPhase, setCurrentPhase] = useState<string | null>(null)
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [agentStates, setAgentStates] = useState<AgentStates>({
     Writer: 'waiting',
     Reader: 'waiting',
@@ -78,6 +80,12 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
       if (data.type === 'auth_success') {
         console.log('Authentication successful')
         return
+      }
+      
+      // Handle session creation
+      if (data.type === 'session_created' && data.session_id) {
+        console.log('Session created:', data.session_id)
+        setCurrentSessionId(data.session_id)
       }
       
       setMessages(prev => [...prev, data])
@@ -139,6 +147,11 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
           Reader: 'waiting',
           Expert: 'waiting'
         })
+        
+        // Store session ID if present
+        if (data.type === 'completed' && data.session_id) {
+          setCurrentSessionId(data.session_id)
+        }
       }
     }
 
@@ -174,6 +187,7 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
     setMessages([])
     setStreamingMessages({})
     setCurrentStreamingAgent(null)
+    setCurrentSessionId(null)
     setIsGenerating(true)
     socketRef.current.send(JSON.stringify(params))
   }, [])
@@ -200,6 +214,7 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
     isGenerating,
     currentAgent,
     currentPhase,
+    currentSessionId,
     agentStates,
     currentActivity,
     streamingMessages,

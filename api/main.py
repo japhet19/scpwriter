@@ -15,15 +15,13 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv(Path(__file__).parent / '.env')
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from scp_coordinator import SCPCoordinator, StoryConfig
-# Import from api.utils specifically
-from api.utils.text_sanitizer import sanitize_text
-from api.utils.encryption import encryptor
-from api.auth import router as auth_router, get_current_user
+from scp_coordinator_session import SCPCoordinatorSession, StoryConfig as SessionStoryConfig
+# Import from utils specifically
+from utils.text_sanitizer import sanitize_text
+from utils.encryption import encryptor
+from auth import router as auth_router, get_current_user
 from supabase import create_client, Client
+from utils.story_session_manager import StorySessionManager
 
 # Store active websocket connections
 active_connections: Dict[str, WebSocket] = {}
@@ -33,37 +31,21 @@ supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_SERVICE_KEY", os.getenv("SUPABASE_ANON_KEY"))
 supabase: Client = create_client(supabase_url, supabase_key)
 
-def map_agent_name_to_key(agent_name: str, coordinator) -> str:
-    """Map theme-specific agent names to standard keys for frontend compatibility."""
-    # Get the theme-specific agent names from the coordinator
-    writer_name = coordinator.theme.writer.name
-    reader_name = coordinator.theme.reader.name 
-    expert_name = coordinator.theme.expert.name
-    
-    # Map to standard keys
-    if agent_name == writer_name:
-        mapped_key = "Writer"
-    elif agent_name == reader_name:
-        mapped_key = "Reader"  
-    elif agent_name == expert_name:
-        mapped_key = "Expert"
-    else:
-        # Fallback for unknown agent names
-        mapped_key = agent_name
-    
-    # Debug logging
-    if mapped_key != agent_name:
-        print(f"🔄 AGENT MAPPING: '{agent_name}' → '{mapped_key}'")
-    
-    return mapped_key
+# Story session manager
+story_session_manager = StorySessionManager(supabase)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     print("Starting SCP Writer API...")
+    # Start session cleanup task
+    await story_session_manager.start_cleanup_task()
     yield
     # Shutdown
     print("Shutting down SCP Writer API...")
+    # Stop session cleanup task
+    await story_session_manager.stop_cleanup_task()
 
 app = FastAPI(
     title="SCP Writer API",
@@ -73,9 +55,12 @@ app = FastAPI(
 )
 
 # Configure CORS
+# Get allowed origins from environment variable, default to localhost for development
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Next.js dev server
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -179,7 +164,7 @@ async def websocket_generate(websocket: WebSocket):
             })
             
             # Create story configuration
-            story_config = StoryConfig(
+            story_config = SessionStoryConfig(
                 page_limit=page_limit,
                 protagonist_name=protagonist_name,
                 model=model,
@@ -187,12 +172,37 @@ async def websocket_generate(websocket: WebSocket):
                 theme_options=theme_options
             )
             
-            # Create coordinator with user's API key
-            coordinator = SCPCoordinator(story_config, api_key=user_api_key)
+            # Create a new session for this story generation
+            session_id = await story_session_manager.create_session(
+                user_id=user_id,
+                config={
+                    "theme": ui_theme,
+                    "page_limit": page_limit,
+                    "protagonist_name": protagonist_name,
+                    "model": model,
+                    "theme_options": theme_options,
+                    "user_request": theme
+                }
+            )
+            
+            # Send session ID to frontend
+            await websocket.send_json({
+                "type": "session_created",
+                "session_id": session_id,
+                "message": "Story generation session created"
+            })
+            
+            # Create coordinator with session support
+            coordinator = SCPCoordinatorSession(
+                story_config=story_config,
+                api_key=user_api_key,
+                session_manager=story_session_manager,
+                session_id=session_id
+            )
             
             # Debug logging for loaded theme
             print(f"🎯 LOADED THEME: {coordinator.theme.name} (ID: {coordinator.theme.id})")
-            print(f"👥 AGENT NAMES: Writer={coordinator.theme.writer.name}, Reader={coordinator.theme.reader.name}, Expert={coordinator.theme.expert.name}")
+            print(f"👥 AGENT SYSTEM: Writer, Reader, Expert")
             
             # Create custom agent wrapper for streaming
             class StreamingAgent:
@@ -206,13 +216,10 @@ async def websocket_generate(websocket: WebSocket):
                     self.model = getattr(original_agent, 'model', 'anthropic/claude-3.5-sonnet')
                     
                 async def respond(self, prompt: str, skip_callback: bool = False):
-                    # Map theme-specific agent name to standard key for frontend
-                    agent_key = map_agent_name_to_key(self.name, self.coordinator)
-                    
                     # Send thinking state update
                     await self.websocket.send_json({
                         "type": "agent_update",
-                        "agent": agent_key,
+                        "agent": self.name,
                         "state": "thinking",
                         "activity": self._get_thinking_activity(),
                         "message": f"{self.name} is processing..."
@@ -224,7 +231,7 @@ async def websocket_generate(websocket: WebSocket):
                     # Send writing state update
                     await self.websocket.send_json({
                         "type": "agent_update",
-                        "agent": agent_key,
+                        "agent": self.name,
                         "state": "writing",
                         "activity": self._get_writing_activity(),
                         "message": f"{self.name} is composing response..."
@@ -237,7 +244,7 @@ async def websocket_generate(websocket: WebSocket):
                         # Send chunk via WebSocket
                         await self.websocket.send_json({
                             "type": "agent_stream_chunk",
-                            "agent": agent_key,
+                            "agent": self.name,
                             "chunk": sanitize_text(chunk),
                             "turn": self.coordinator.turn_count
                         })
@@ -245,7 +252,7 @@ async def websocket_generate(websocket: WebSocket):
                     # Send complete message when done
                     await self.websocket.send_json({
                         "type": "agent_message",
-                        "agent": agent_key,
+                        "agent": self.name,
                         "message": sanitize_text(response_text),
                         "turn": self.coordinator.turn_count,
                         "phase": self.coordinator.current_phase
@@ -256,7 +263,7 @@ async def websocket_generate(websocket: WebSocket):
                     if milestone:
                         await self.websocket.send_json({
                             "type": "agent_update",
-                            "agent": agent_key,
+                            "agent": self.name,
                             "state": "waiting",
                             "milestone": milestone,
                             "message": f"Milestone reached: {milestone}"
@@ -314,11 +321,10 @@ async def websocket_generate(websocket: WebSocket):
             try:
                 await coordinator.run_story_creation(theme)
                 
-                # Send completion message
-                story_path = Path("output/story_output.md")
-                if story_path.exists():
-                    story_content = story_path.read_text(encoding='utf-8', errors='replace')
-                    
+                # Get final story from session
+                story_content = story_session_manager.extract_story_from_draft(session_id)
+                
+                if story_content:
                     # Save story to database
                     try:
                         # Extract title from story (usually first line after #)
@@ -329,13 +335,14 @@ async def websocket_generate(websocket: WebSocket):
                                 title = line.strip('#').strip()
                                 break
                         
-                        # Save to database
+                        # Save to database with session reference
                         story_record = supabase.table("stories").insert({
                             "user_id": user_id,
                             "title": title,
                             "theme": ui_theme,
                             "protagonist_name": protagonist_name,
                             "content": story_content,
+                            "session_id": session_id,  # Link to session
                             "agent_logs": {
                                 "conversation_history": coordinator.conversation_history,
                                 "turn_count": coordinator.turn_count,
@@ -361,15 +368,20 @@ async def websocket_generate(websocket: WebSocket):
                     await websocket.send_json({
                         "type": "completed",
                         "story": sanitize_text(story_content),
+                        "session_id": session_id,
                         "message": "Story generation complete!"
                     })
                 else:
                     await websocket.send_json({
                         "type": "error",
-                        "message": "Story generation completed but no output file found"
+                        "message": "Story generation completed but no story found in session"
                     })
                     
             except Exception as e:
+                # Mark session as failed
+                if 'session_id' in locals():
+                    await story_session_manager.fail_session(session_id, str(e))
+                
                 await websocket.send_json({
                     "type": "error",
                     "message": f"Error during story generation: {str(e)}"
@@ -378,17 +390,86 @@ async def websocket_generate(websocket: WebSocket):
     except WebSocketDisconnect:
         del active_connections[str(connection_id)]
         print(f"Client {connection_id} disconnected")
+        # Mark any active session as failed on disconnect
+        if 'session_id' in locals():
+            await story_session_manager.fail_session(session_id, "WebSocket disconnected")
     except Exception as e:
         print(f"WebSocket error: {e}")
         if str(connection_id) in active_connections:
             del active_connections[str(connection_id)]
+        # Mark any active session as failed
+        if 'session_id' in locals():
+            await story_session_manager.fail_session(session_id, f"WebSocket error: {str(e)}")
 
 @app.get("/health")
 async def health_check():
     return {
         "status": "healthy",
-        "active_connections": len(active_connections)
+        "active_connections": len(active_connections),
+        "active_sessions": len(story_session_manager.active_sessions)
     }
+
+@app.get("/api/sessions/{session_id}")
+async def get_session(session_id: str):
+    """Get information about a specific story generation session."""
+    try:
+        # Try to get from active sessions first
+        session = story_session_manager.get_session(session_id)
+        if session:
+            return {
+                "session_id": session_id,
+                "status": session.status,
+                "config": session.config,
+                "current_version": session.current_version,
+                "message_count": len(session.messages),
+                "created_at": session.created_at.isoformat(),
+                "updated_at": session.updated_at.isoformat()
+            }
+        
+        # Try to recover from database
+        session = await story_session_manager.recover_session(session_id)
+        if session:
+            return {
+                "session_id": session_id,
+                "status": session.status,
+                "config": session.config,
+                "current_version": session.current_version,
+                "message_count": len(session.messages),
+                "created_at": session.created_at.isoformat(),
+                "updated_at": session.updated_at.isoformat()
+            }
+        
+        return {"error": "Session not found"}, 404
+        
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+@app.get("/api/sessions/{session_id}/story")
+async def get_session_story(session_id: str):
+    """Get the current story content from a session."""
+    try:
+        # Try to get from active sessions first
+        session = story_session_manager.get_session(session_id)
+        if not session:
+            # Try to recover from database
+            session = await story_session_manager.recover_session(session_id)
+        
+        if session:
+            story_content = story_session_manager.extract_story_from_draft(session_id)
+            if story_content:
+                return {
+                    "session_id": session_id,
+                    "story": story_content,
+                    "version": session.current_version,
+                    "status": session.status
+                }
+            else:
+                return {"error": "No story content found in session"}, 404
+        
+        return {"error": "Session not found"}, 404
+        
+    except Exception as e:
+        return {"error": str(e)}, 500
 
 if __name__ == "__main__":
     import uvicorn

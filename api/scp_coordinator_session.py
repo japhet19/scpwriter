@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SCP Story Coordinator - manages conversation flow between Writer, Reader, and Expert agents."""
+"""SCP Story Coordinator with Session Support - manages conversation flow between Writer, Reader, and Expert agents."""
 
 import asyncio
 import re
@@ -12,6 +12,7 @@ from datetime import datetime
 from agents.base_agent import BaseAgent
 from utils import CheckpointManager
 from utils.text_sanitizer import sanitize_text
+from utils.story_session_manager import StorySessionManager
 from themes import get_theme, StoryTheme
 
 # Configure logging
@@ -48,10 +49,11 @@ class StoryConfig:
             return "a complex narrative with multiple plot threads"
 
 
-class SCPCoordinator:
-    """Coordinates SCP story writing between Writer, Reader, and Writing Expert agents."""
+class SCPCoordinatorSession:
+    """Coordinates SCP story writing between Writer, Reader, and Writing Expert agents using session storage."""
     
-    def __init__(self, story_config: Optional[StoryConfig] = None, api_key: Optional[str] = None):
+    def __init__(self, story_config: Optional[StoryConfig] = None, api_key: Optional[str] = None, 
+                 session_manager: Optional[StorySessionManager] = None, session_id: Optional[str] = None):
         self.agents: Dict[str, BaseAgent] = {}
         self.story_config = story_config or StoryConfig()
         self.theme: StoryTheme = get_theme(self.story_config.theme)
@@ -65,6 +67,8 @@ class SCPCoordinator:
         self.current_phase = "initialization"
         self.outline_iterations = 0
         self.api_key = api_key  # Store user's OpenRouter API key
+        self.session_manager = session_manager
+        self.session_id = session_id
         
     def parse_next_speaker(self, message: str) -> Optional[str]:
         """Extract who should speak next from a message."""
@@ -120,24 +124,12 @@ class SCPCoordinator:
         
         return has_approval
     
-    def extract_story_from_discussion(self) -> Optional[str]:
-        """Extract the latest story from discussion file between markers."""
-        discussion_path = Path("discussions/story_discussion.md")
-        if not discussion_path.exists():
+    async def extract_story_from_discussion(self) -> Optional[str]:
+        """Extract the latest story from session storage."""
+        if not self.session_manager or not self.session_id:
             return None
             
-        content = discussion_path.read_text(encoding='utf-8', errors='replace')
-        
-        # Find the last story between markers
-        pattern = r'---BEGIN STORY---\s*(.*?)\s*---END STORY---'
-        matches = re.findall(pattern, content, re.DOTALL)
-        
-        if matches:
-            # Sanitize and return the last (most recent) story
-            story = matches[-1].strip()
-            return sanitize_text(story)
-        
-        return None
+        return self.session_manager.extract_story_from_draft(self.session_id)
     
     def check_for_conflict(self, message: str) -> bool:
         """Check if there's a conflict that needs expert resolution."""
@@ -175,8 +167,8 @@ class SCPCoordinator:
     
     async def check_and_inject_checkpoint(self) -> Optional[str]:
         """Monitor story word count and inject checkpoint prompts."""
-        # Extract current story from discussion
-        story_content = self.extract_story_from_discussion()
+        # Extract current story from session
+        story_content = await self.extract_story_from_discussion()
         if not story_content:
             return None
             
@@ -225,19 +217,6 @@ Writer: Please pause your writing.
         logger.info("Initializing agents for SCP story creation...")
         self.user_request = user_request
         
-        # Clear files for fresh start
-        discussion_path = Path("discussions/story_discussion.md")
-        output_path = Path("output/story_output.md")
-        
-        # Ensure directories exist
-        discussion_path.parent.mkdir(exist_ok=True)
-        output_path.parent.mkdir(exist_ok=True)
-        
-        # Clear files
-        discussion_path.write_text("", encoding='utf-8')
-        output_path.write_text("", encoding='utf-8')
-        logger.info("Cleared discussion and output files for fresh start")
-        
         # Create Writer agent using theme
         writer_prompt = self.theme.get_writer_prompt(user_request, self.story_config)
         
@@ -253,20 +232,25 @@ Character Creation:
   Dr. Nakamura, Inspector Delacroix, Technician Petrova, Director Hassan
 - Consider using given names that reflect different cultures and backgrounds
 
-IMPORTANT - Story Writing Process:
-1. Write your story drafts IN THE DISCUSSION FILE using these markers:
+CRITICAL - Story Writing Process:
+
+PHASE 1 - OUTLINE ONLY:
+- When asked for an outline, share ONLY your outline
+- DO NOT write the full story yet
+- DO NOT use story markers for outlines
+- Pass to [@Reader] for feedback on your outline
+
+PHASE 2 - STORY WRITING (After Reader Approval):
+- Reader will explicitly say "approved" or "I approve" your outline
+- ONLY THEN write your complete story
+- YOU MUST use these exact markers:
    ---BEGIN STORY---
-   [Your story content here]
+   [Your complete story here]
    ---END STORY---
-2. DO NOT write to output/story_output.md - that's only for approved final versions
-3. DO NOT create new files - just respond with your story content and markers
-4. Reader will review your story and provide feedback
-5. When revising, ALWAYS include the complete revised story with markers:
-   ---BEGIN STORY---
-   [Your complete revised story here]
-   ---END STORY---
-6. Never just describe changes - always provide the full revised text
-7. Only after Reader explicitly approves will the story be finalized
+- Include markers on their own lines with no extra spaces
+- The story will NOT be saved without BOTH markers exactly as shown
+- When revising based on feedback, ALWAYS include the complete story with markers
+- Never just describe changes - always provide the full revised text
 
 Scope Guidance:
 Your story should be {self.story_config.get_scope_guidance()}.
@@ -412,9 +396,9 @@ TECHNICAL QUALITY ASSURANCE (MANDATORY):
 """
         
         self.agents = {
-            "Writer": BaseAgent(self.theme.writer.name, writer_prompt, model=self.story_config.model, api_key=self.api_key),
-            "Reader": BaseAgent(self.theme.reader.name, reader_prompt, model=self.story_config.model, api_key=self.api_key),
-            "Expert": BaseAgent(self.theme.expert.name, expert_prompt, model=self.story_config.model, api_key=self.api_key)
+            "Writer": BaseAgent("Writer", writer_prompt, model=self.story_config.model, api_key=self.api_key),
+            "Reader": BaseAgent("Reader", reader_prompt, model=self.story_config.model, api_key=self.api_key),
+            "Expert": BaseAgent("Expert", expert_prompt, model=self.story_config.model, api_key=self.api_key)
         }
         
         logger.info("All agents initialized successfully")
@@ -486,6 +470,41 @@ After sharing your outline, pass to [@Reader] for feedback."""
                 "time": elapsed
             })
             
+            # Save to session if available
+            if self.session_manager and self.session_id:
+                # Save agent message
+                await self.session_manager.save_message(
+                    self.session_id,
+                    self.current_speaker,
+                    response,
+                    self.turn_count,
+                    self.current_phase
+                )
+                
+                # Check if response contains a story draft
+                has_begin = "---BEGIN STORY---" in response
+                has_end = "---END STORY---" in response
+                
+                if has_begin and has_end:
+                    # Save as draft
+                    await self.session_manager.save_draft(
+                        self.session_id,
+                        response,
+                        {
+                            "agent": self.current_speaker,
+                            "phase": self.current_phase,
+                            "turn": self.turn_count
+                        }
+                    )
+                    logger.info(f"Draft saved: Found both story markers (turn {self.turn_count})")
+                elif has_begin and not has_end:
+                    logger.warning(f"Draft NOT saved: Missing END STORY marker (turn {self.turn_count})")
+                elif not has_begin and has_end:
+                    logger.warning(f"Draft NOT saved: Missing BEGIN STORY marker (turn {self.turn_count})")
+                elif self.current_speaker == "Writer" and self.current_phase == "writing":
+                    # Writer in writing phase but no markers
+                    logger.warning(f"Draft NOT saved: Writer in writing phase but no story markers found (turn {self.turn_count})")
+            
             # Response already printed by agent if streaming
             # No need for extra newline since we print complete messages now
             
@@ -498,16 +517,15 @@ After sharing your outline, pass to [@Reader] for feedback."""
                     next_speaker = "Expert"
                 elif self.current_speaker == "Expert":
                     logger.info("Expert has approved after technical review!")
-                    # Extract the story from discussion and write to output
-                    story_content = self.extract_story_from_discussion()
-                    if story_content:
-                        output_path = Path("output/story_output.md")
-                        output_path.write_text(story_content, encoding='utf-8')
-                        logger.info(f"Story written to {output_path}")
-                        print(f"\n[SYSTEM]: Story approved with technical review passed and saved to {output_path}")
+                    # Extract the story from session and mark complete
+                    story_content = await self.extract_story_from_discussion()
+                    if story_content and self.session_manager and self.session_id:
+                        await self.session_manager.complete_session(self.session_id, story_content)
+                        logger.info(f"Story completed and saved to session {self.session_id}")
+                        print(f"\n[SYSTEM]: Story approved with technical review passed and saved to session.")
                         self.story_complete = True
                     else:
-                        logger.error("Could not extract story from discussion despite approval")
+                        logger.error("Could not extract story from session despite approval")
             
             # Handle outline phase - evaluate scope and limit iterations
             if self.current_phase == "outline":
@@ -524,13 +542,11 @@ After sharing your outline, pass to [@Reader] for feedback."""
                             print(f"\n[SYSTEM NOTICE]: {scope_msg}")
                             print("Please simplify the outline to fit the target length.\n")
                 
-                # Check if we should move to writing phase
-                if self.outline_iterations >= 2 and self.current_speaker == "Reader":
-                    if "approved" in response.lower() or self.outline_iterations >= 3:
-                        self.current_phase = "writing"
-                        logger.info(f"Moving to writing phase after {self.outline_iterations} outline iterations")
-                        # Force next prompt to start writing
-                        current_prompt = "The outline has been sufficiently developed. Please begin writing the story now."
+                # Check if Reader approved the outline
+                if self.current_speaker == "Reader" and ("approved" in response.lower() or "i approve" in response.lower()):
+                    self.current_phase = "writing"
+                    logger.info(f"Phase transition: outline → writing (Reader approved)")
+                    print("\n[SYSTEM]: Reader approved outline. Moving to story writing phase.\n")
             
             # Parse next speaker
             next_speaker = self.parse_next_speaker(response)
@@ -561,11 +577,28 @@ After sharing your outline, pass to [@Reader] for feedback."""
             if next_speaker == "Expert":
                 # Check if this is final review after Reader approval
                 if previous_speaker == "Reader" and self.check_story_approval(response, "Reader"):
-                    current_prompt = f"""The Writer and Reader have both approved the story. 
+                    # Extract the actual story content from the session
+                    story_content = await self.extract_story_from_discussion()
+                    
+                    if not story_content:
+                        logger.error("Could not extract story for Expert review despite approvals")
+                        current_prompt = f"""The Writer and Reader have both approved the story, but I cannot find the story content in the session.
+
+Please check the conversation history and extract the latest story marked between ---BEGIN STORY--- and ---END STORY--- markers.
+
+{previous_speaker} said: {response}"""
+                    else:
+                        current_prompt = f"""The Writer and Reader have both approved the story. 
 
 You must now perform a MANDATORY FINAL TECHNICAL REVIEW before the story can be published.
 
-Please carefully read the complete story and check for:
+Here is the complete story to review:
+
+---BEGIN STORY---
+{story_content}
+---END STORY---
+
+Please carefully read the story above and check for:
 - Spelling errors and typos (including joined words)
 - Grammar and punctuation issues
 - Formatting consistency
@@ -584,7 +617,24 @@ If the story passes all technical checks, approve with: "I APPROVE this story as
 Please review the discussion and make a balanced decision to move the project forward."""
             else:
                 # Regular handoff
-                current_prompt = f"{previous_speaker} said: {response}\n\nPlease respond."
+                # Check if this is Writer's turn after Reader approval
+                if (next_speaker == "Writer" and self.current_phase == "writing" and 
+                    previous_speaker == "Reader" and ("approved" in response.lower() or "i approve" in response.lower())):
+                    current_prompt = f"""The Reader has approved your outline! 
+
+Now write the complete story following these requirements:
+1. Write the full story (~{self.story_config.total_words} words)
+2. MANDATORY: Wrap your story with these exact markers:
+   ---BEGIN STORY---
+   [Your complete story here]
+   ---END STORY---
+3. Include the ENTIRE story between the markers
+4. The markers must be on their own lines with no extra spaces
+5. Pass to [@Reader] when complete
+
+{previous_speaker} said: {response}"""
+                else:
+                    current_prompt = f"{previous_speaker} said: {response}\n\nPlease respond."
         
         logger.info(f"\nStory creation ended after {self.turn_count} turns")
         self.print_summary()
@@ -627,38 +677,57 @@ Please review the discussion and make a balanced decision to move the project fo
             avg_time = stats["total_time"] / stats["count"]
             print(f"  {speaker}: {stats['count']} turns, avg {avg_time:.1f}s/turn")
         
-        # Check final story
-        story_path = Path("output/story_output.md")
-        if story_path.exists():
-            content = story_path.read_text(encoding='utf-8', errors='replace')
-            word_count = len(content.split())
-            print(f"\nFinal story: {word_count} words ({word_count/300:.1f} pages)")
-            if word_count > 0:
-                print("Story saved to: output/story_output.md")
-        else:
-            # Check if story is still in discussion
-            story_in_discussion = self.extract_story_from_discussion()
-            if story_in_discussion:
-                word_count = len(story_in_discussion.split())
-                print(f"\nStory in discussion: {word_count} words ({word_count/300:.1f} pages)")
-                print("Note: Story was not approved yet, still in discussion")
+        # Check final story status
+        if self.session_id:
+            print(f"\nSession ID: {self.session_id}")
+            if self.story_complete:
+                print("Story status: COMPLETED")
             else:
-                print("\nNo story file generated")
+                print("Story status: IN PROGRESS")
         
         print("\n" + "="*60)
 
 
 async def main():
     """Run the SCP story creation."""
-    coordinator = SCPCoordinator()
+    # This is for testing only - in production, use the WebSocket handler
+    from supabase import create_client
+    import os
+    from dotenv import load_dotenv
+    
+    load_dotenv()
+    
+    # Initialize Supabase
+    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
+    supabase = create_client(supabase_url, supabase_key)
+    
+    # Create session manager
+    from utils.story_session_manager import StorySessionManager
+    session_manager = StorySessionManager(supabase)
+    
+    # Create a test session
+    test_user_id = "test-user-123"
+    session_id = await session_manager.create_session(test_user_id, {
+        "theme": "scp",
+        "page_limit": 3,
+        "model": "default"
+    })
+    
+    # Create coordinator
+    coordinator = SCPCoordinatorSession(
+        session_manager=session_manager,
+        session_id=session_id
+    )
     
     # Example request
     user_request = "Write an SCP story about a library where books rewrite themselves based on who reads them"
     
     print("\n" + "="*60)
-    print("SCP STORY CREATION SYSTEM")
+    print("SCP STORY CREATION SYSTEM (Session-Based)")
     print("="*60)
-    print(f"Request: {user_request}\n")
+    print(f"Request: {user_request}")
+    print(f"Session ID: {session_id}\n")
     
     await coordinator.run_story_creation(user_request)
 

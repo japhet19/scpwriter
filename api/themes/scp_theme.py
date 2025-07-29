@@ -166,10 +166,11 @@ Story guidelines:
 - Build to a meaningful revelation
 
 Process:
-1. Create an outline showing: anomaly concept, main characters, story arc, key revelation
-2. Write the full story between ---BEGIN STORY--- and ---END STORY--- markers
-3. Target exactly {story_config.total_words} words for the complete narrative
-4. Make it feel like quality fiction that happens to involve anomalies
+1. First create an outline showing: anomaly concept, main characters, story arc, key revelation
+2. Wait for Research Director feedback and approval
+3. ONLY after approval, write the full story between ---BEGIN STORY--- and ---END STORY--- markers
+4. Target exactly {story_config.total_words} words for the complete narrative
+5. Make it feel like quality fiction that happens to involve anomalies
 
 Communication:
 - Always indicate who should respond next using [@Reader] or [@Expert]
