@@ -541,27 +541,7 @@ function HomeContent() {
             )}
           </div>
           
-          {sessionMetadata?.sessionId && (
-            <div className="session-info">
-              <div className="session-id-display">
-                <span className="session-label">Session ID:</span>
-                <code className="session-id">{sessionMetadata.sessionId}</code>
-                <button 
-                  className="copy-session-btn"
-                  onClick={() => {
-                    navigator.clipboard.writeText(sessionMetadata.sessionId || '')
-                    alert('Session ID copied!')
-                  }}
-                  title="Copy Session ID"
-                >
-                  📋
-                </button>
-              </div>
-              <div className="session-note">
-                Save this ID to retrieve your story later if needed
-              </div>
-            </div>
-          )}
+          {/* Session ID display removed - stories are automatically saved */}
           
           <div className="story-actions">
             <div className="action-row">
@@ -1103,59 +1083,7 @@ function HomeContent() {
           font-family: inherit;
         }
         
-        .session-info {
-          background: rgba(0, 255, 0, 0.05);
-          border: 1px solid rgba(0, 255, 0, 0.3);
-          border-radius: 4px;
-          padding: 15px;
-          margin: 20px auto;
-          max-width: 600px;
-          text-align: center;
-        }
-        
-        .session-id-display {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 10px;
-          margin-bottom: 8px;
-        }
-        
-        .session-label {
-          color: rgba(0, 255, 0, 0.8);
-          font-weight: bold;
-        }
-        
-        .session-id {
-          background: rgba(0, 0, 0, 0.5);
-          color: #00ff00;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-family: monospace;
-          font-size: 0.9em;
-        }
-        
-        .copy-session-btn {
-          background: none;
-          border: 1px solid rgba(0, 255, 0, 0.5);
-          color: #00ff00;
-          cursor: pointer;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 0.9em;
-          transition: all 0.3s ease;
-        }
-        
-        .copy-session-btn:hover {
-          background: rgba(0, 255, 0, 0.1);
-          border-color: #00ff00;
-        }
-        
-        .session-note {
-          color: rgba(0, 255, 0, 0.6);
-          font-size: 0.85em;
-          font-style: italic;
-        }
+        /* Session info styles removed - no longer displaying session ID */
         
         .story-actions {
           display: flex;
