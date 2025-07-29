@@ -12,7 +12,7 @@
   border: 1px solid rgba(0, 255, 0, 0.3);
   border-radius: 4px;
   position: relative;
-  cursor: help;
+  cursor: pointer;
   transition: all 0.3s ease;
 }
 
@@ -98,6 +98,9 @@
   letter-spacing: 1px;
   border-bottom: 1px solid rgba(0, 255, 0, 0.3);
   padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .breakdown {
@@ -132,6 +135,92 @@
   border-top: 1px solid rgba(0, 255, 0, 0.2);
 }
 
+.infoIcon {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-family: 'Share Tech Mono', monospace;
+  transition: color 0.2s ease;
+}
+
+.infoIcon:hover {
+  color: var(--terminal-green);
+  text-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+}
+
+.explanation {
+  margin-top: 16px;
+  border-top: 1px solid rgba(0, 255, 0, 0.3);
+  padding-top: 12px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.explanationHeader {
+  color: var(--terminal-green);
+  font-size: 12px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.explanationContent {
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgba(0, 255, 0, 0.8);
+}
+
+.explanationContent p {
+  margin: 8px 0;
+}
+
+.explanationContent ul {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+}
+
+.explanationContent li {
+  margin: 4px 0;
+  padding-left: 8px;
+}
+
+.explanationContent strong {
+  color: var(--terminal-green);
+  font-weight: normal;
+  text-decoration: underline;
+}
+
+.tokenExplanation {
+  margin-top: 12px !important;
+  font-weight: bold;
+}
+
+.reassurance {
+  margin-top: 12px !important;
+  font-style: italic;
+  text-align: center;
+}
+
+.explanationFooter {
+  color: rgba(0, 255, 0, 0.3);
+  font-size: 10px;
+  margin-top: 12px;
+  text-align: left;
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
   .costDisplay {
@@ -152,7 +241,8 @@
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
   .warning,
-  .tooltip {
+  .tooltip,
+  .explanation {
     animation: none;
   }
 }
