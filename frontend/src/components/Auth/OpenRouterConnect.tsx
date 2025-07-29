@@ -36,14 +36,26 @@ export default function OpenRouterConnect() {
       sessionStorage.setItem('openrouter_code_verifier', codeVerifier)
       
       // Construct OpenRouter OAuth URL
+      const callbackUrl = process.env.NEXT_PUBLIC_OPENROUTER_CALLBACK_URL
+      console.log('Callback URL:', callbackUrl)
+      console.log('Code challenge:', codeChallenge)
+      
+      if (!callbackUrl) {
+        console.error('NEXT_PUBLIC_OPENROUTER_CALLBACK_URL is not set!')
+        throw new Error('OpenRouter callback URL is not configured')
+      }
+      
       const params = new URLSearchParams({
-        callback_url: process.env.NEXT_PUBLIC_OPENROUTER_CALLBACK_URL!,
+        callback_url: callbackUrl,
         code_challenge: codeChallenge,
         code_challenge_method: 'S256'
       })
       
+      const authUrl = `https://openrouter.ai/auth?${params.toString()}`
+      console.log('Redirecting to:', authUrl)
+      
       // Redirect to OpenRouter
-      window.location.href = `https://openrouter.ai/auth?${params.toString()}`
+      window.location.href = authUrl
     } catch (error) {
       console.error('Failed to initiate OpenRouter connection:', error)
       setLoading(false)
