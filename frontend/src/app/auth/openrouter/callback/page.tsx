@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 
-export default function OpenRouterCallback() {
+function OpenRouterCallbackContent() {
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing')
   const [error, setError] = useState('')
   const router = useRouter()
@@ -129,5 +129,26 @@ export default function OpenRouterCallback() {
         }
       `}</style>
     </div>
+  )
+}
+
+export default function OpenRouterCallback() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        padding: '20px',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <h2>LOADING...</h2>
+          <div style={{ fontSize: '48px' }}>⚡</div>
+        </div>
+      </div>
+    }>
+      <OpenRouterCallbackContent />
+    </Suspense>
   )
 }
