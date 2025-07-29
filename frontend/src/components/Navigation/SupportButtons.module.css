@@ -1,0 +1,108 @@
+.supportButtons {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.supportLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  color: rgba(0, 255, 0, 0.7);
+  text-decoration: none;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  transition: all 200ms ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+/* ASCII bracket styling */
+.supportLink::before {
+  content: '[';
+  position: absolute;
+  left: 0;
+  opacity: 0.5;
+  transition: opacity 200ms ease;
+}
+
+.supportLink::after {
+  content: ']';
+  position: absolute;
+  right: 0;
+  opacity: 0.5;
+  transition: opacity 200ms ease;
+}
+
+.supportLink:hover {
+  color: var(--terminal-green);
+  text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.supportLink:hover::before,
+.supportLink:hover::after {
+  opacity: 1;
+}
+
+.supportLink:focus {
+  outline: 2px solid var(--terminal-green);
+  outline-offset: 2px;
+}
+
+.icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.text {
+  font-weight: 500;
+}
+
+/* Tablet styles (481-768px) */
+@media (max-width: 768px) and (min-width: 481px) {
+  .supportButtons {
+    gap: 12px;
+  }
+  
+  .supportLink {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .text {
+    display: none;
+  }
+  
+  .supportLink::after {
+    content: 'Support]';
+    right: -45px;
+    font-size: 10px;
+    opacity: 0.4;
+  }
+  
+  .supportLink:last-child::after {
+    content: 'Feedback]';
+    right: -52px;
+  }
+}
+
+/* Mobile styles (<480px) */
+@media (max-width: 480px) {
+  .supportButtons {
+    display: none; /* Hidden in main nav on mobile - will be in mobile menu */
+  }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  .supportLink {
+    transition: none;
+  }
+  
+  .supportLink::before,
+  .supportLink::after {
+    transition: none;
+  }
+}

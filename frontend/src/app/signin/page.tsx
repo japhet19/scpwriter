@@ -186,8 +186,8 @@ export default function SignInPage() {
               </form>
             ) : (
               <form onSubmit={handleMagicLink} className={styles.form}>
-                <div className={styles.formHeader}>
-                  [M] MAGIC LINK (Passwordless)
+                <div className={styles.formHeader} style={{ color: 'var(--terminal-amber)' }}>
+                  ✉ MAGIC LINK ACCESS - No Password Required
                 </div>
                 
                 <div className={styles.inputGroup}>
@@ -253,8 +253,9 @@ export default function SignInPage() {
                   className={styles.magicButton}
                   onClick={() => setMode('magiclink')}
                   disabled={loading}
+                  title="Sign in without a password - we'll send you a secure link"
                 >
-                  <span className={styles.magicIcon}>[M]</span> MAGIC LINK (Passwordless)
+                  <span className={styles.magicIcon}>✉</span> MAGIC LINK (No Password Required)
                 </button>
               )}
             </div>

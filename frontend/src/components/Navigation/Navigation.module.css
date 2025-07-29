@@ -19,6 +19,7 @@
   max-width: 1440px;
   margin: 0 auto;
   padding: 0 24px;
+  gap: 24px;
 }
 
 .navBorder {
@@ -252,6 +253,10 @@
   cursor: pointer;
   text-decoration: none;
   transition: all 150ms ease;
+}
+
+a.mobileMenuItem {
+  text-decoration: none;
 }
 
 .mobileMenuItem:hover {

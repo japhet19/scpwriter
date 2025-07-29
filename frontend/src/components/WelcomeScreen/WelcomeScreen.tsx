@@ -39,6 +39,10 @@ export default function WelcomeScreen({ onThemeSelect }: WelcomeScreenProps) {
     )
   }
 
+  const getThemeThumbnail = (themeId: string): string => {
+    return `/images/thumbnails/${themeId}_1_thumb.jpg`
+  }
+
   return (
     <div className={styles.welcomeScreen}>
       <div className={styles.hero}>
@@ -64,7 +68,7 @@ export default function WelcomeScreen({ onThemeSelect }: WelcomeScreenProps) {
                 className={`${styles.themeCard} ${isSelected ? styles.selected : ''}`}
                 onClick={() => handleThemeSelect(themeId)}
                 style={{
-                  backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url(${images[0]})`
+                  backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url(${getThemeThumbnail(themeId)})`
                 }}
               >
                 <div className={styles.themeOverlay}>

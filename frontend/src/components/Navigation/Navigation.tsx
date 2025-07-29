@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import styles from './Navigation.module.css'
 import UserMenu from './UserMenu'
+import SupportButtons from './SupportButtons'
 
 export default function Navigation() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
@@ -71,6 +72,9 @@ export default function Navigation() {
           </button>
         </div>
 
+        {/* Support Buttons - Desktop/Tablet */}
+        <SupportButtons />
+
         {/* Desktop User Section */}
         <div className={styles.userSection}>
           {loading ? (
@@ -116,6 +120,26 @@ export default function Navigation() {
           <div className={styles.mobileUserInfo}>
             [{getUserDisplayName()}@plotcraft]
           </div>
+          <div className={styles.mobileDivider}>━━━━━━━━━━━━━━━</div>
+          
+          {/* Support Links in Mobile Menu */}
+          <a
+            href="https://buymeacoffee.com/japhetkd"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.mobileMenuItem}
+          >
+            &gt; ☕ Support PlotCraft
+          </a>
+          <a
+            href="https://forms.gle/b8TAsc8tuCj5ftF28"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.mobileMenuItem}
+          >
+            &gt; 💬 Send Feedback
+          </a>
+          
           <div className={styles.mobileDivider}>━━━━━━━━━━━━━━━</div>
           <button 
             onClick={async () => {
