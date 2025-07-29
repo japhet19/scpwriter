@@ -11,6 +11,12 @@ function OpenRouterCallbackContent() {
   const searchParams = useSearchParams()
   const { checkOpenRouterKey } = useAuth()
 
+  // Debug: Log when component mounts
+  useEffect(() => {
+    console.log('OpenRouterCallbackContent mounted')
+    console.log('Current URL:', window.location.href)
+  }, [])
+
   useEffect(() => {
     const handleCallback = async () => {
       const code = searchParams.get('code')
