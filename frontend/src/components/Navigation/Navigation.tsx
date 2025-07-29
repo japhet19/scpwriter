@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import styles from './Navigation.module.css'
 import UserMenu from './UserMenu'
@@ -94,48 +94,38 @@ export default function Navigation() {
                 />
               )}
             </div>
-          ) : (
-            <Link href="/signin" className={styles.signInLink}>
-              [SIGN IN]
-            </Link>
-          )}
+          ) : null}
         </div>
 
-        {/* Mobile Menu Button */}
-        <button
-          onClick={toggleMobileMenu}
-          className={styles.mobileMenuButton}
-          aria-label="Mobile menu"
-          aria-expanded={isMobileMenuOpen}
-        >
-          ☰
-        </button>
+        {/* Mobile Menu Button - Only show when user is authenticated */}
+        {user && (
+          <button
+            onClick={toggleMobileMenu}
+            className={styles.mobileMenuButton}
+            aria-label="Mobile menu"
+            aria-expanded={isMobileMenuOpen}
+          >
+            ☰
+          </button>
+        )}
       </div>
 
       {/* Mobile Menu */}
-      {isMobileMenuOpen && (
+      {isMobileMenuOpen && user && (
         <div className={styles.mobileMenu}>
-          {user ? (
-            <>
-              <div className={styles.mobileUserInfo}>
-                [{getUserDisplayName()}@plotcraft]
-              </div>
-              <div className={styles.mobileDivider}>━━━━━━━━━━━━━━━</div>
-              <button 
-                onClick={async () => {
-                  await signOut()
-                  router.push('/signin')
-                }}
-                className={styles.mobileMenuItem}
-              >
-                &gt; Sign Out
-              </button>
-            </>
-          ) : (
-            <Link href="/signin" className={styles.mobileMenuItem}>
-              &gt; Sign In
-            </Link>
-          )}
+          <div className={styles.mobileUserInfo}>
+            [{getUserDisplayName()}@plotcraft]
+          </div>
+          <div className={styles.mobileDivider}>━━━━━━━━━━━━━━━</div>
+          <button 
+            onClick={async () => {
+              await signOut()
+              router.push('/signin')
+            }}
+            className={styles.mobileMenuItem}
+          >
+            &gt; Sign Out
+          </button>
         </div>
       )}
 
