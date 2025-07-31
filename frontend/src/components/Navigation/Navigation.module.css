@@ -13,7 +13,6 @@
 
 .navContent {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   height: 64px;
   max-width: 1440px;
@@ -97,10 +96,56 @@
   to { max-width: 150px; }
 }
 
+/* Navigation Links */
+.navLinks {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  margin-left: 32px;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--terminal-green);
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 8px 16px;
+  transition: all 150ms ease;
+  border-radius: 4px;
+}
+
+.navLink:hover {
+  background: rgba(0, 255, 0, 0.1);
+  text-shadow: 0 0 8px var(--terminal-green);
+}
+
+.navLink:hover .navLinkIcon {
+  text-shadow: 0 0 10px var(--terminal-green);
+}
+
+.navLink:focus {
+  outline: 2px solid var(--terminal-green);
+  outline-offset: 2px;
+}
+
+.navLinkIcon {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.navLinkText {
+  white-space: nowrap;
+}
+
 /* User Section */
 .userSection {
   display: flex;
   align-items: center;
+  gap: 16px;
+  margin-left: auto;
 }
 
 .loadingText {
@@ -278,6 +323,10 @@ a.mobileMenuItem {
   }
   
   .logoText {
+    display: none;
+  }
+  
+  .navLinks {
     display: none;
   }
   

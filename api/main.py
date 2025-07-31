@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 from typing import Dict, Optional
 from dotenv import load_dotenv
+import httpx
+import re
 
 # Load environment variables
 load_dotenv(Path(__file__).parent / '.env')
@@ -33,6 +35,60 @@ supabase: Client = create_client(supabase_url, supabase_key)
 
 # Story session manager
 story_session_manager = StorySessionManager(supabase)
+
+async def generate_story_title(story_content: str, api_key: str, model: str = "anthropic/claude-3.5-haiku") -> str:
+    """Generate a title for a story using AI"""
+    try:
+        # Clean the story content and get first 1000 chars for title generation
+        content_preview = story_content[:1000].strip()
+        if not content_preview:
+            return "Untitled Story"
+        
+        # Create prompt for title generation
+        prompt = f"""Generate a concise, descriptive title (3-8 words) for this story. 
+The title should capture the essence, theme, or main element of the story.
+Return only the title, nothing else.
+
+Story content:
+{content_preview}"""
+
+        # Make API call to OpenRouter
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "user", "content": prompt}
+                    ],
+                    "max_tokens": 20,
+                    "temperature": 0.7
+                },
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("choices") and len(data["choices"]) > 0:
+                    title = data["choices"][0]["message"]["content"].strip()
+                    # Clean up the title - remove quotes and extra whitespace
+                    title = re.sub(r'^["\']|["\']$', '', title)
+                    title = title.strip()
+                    
+                    # Ensure title is reasonable length
+                    if len(title) > 50:
+                        title = title[:50].rsplit(' ', 1)[0] + "..."
+                    
+                    return title if title else "Untitled Story"
+                    
+    except Exception as e:
+        print(f"[ERROR] Failed to generate title: {e}")
+    
+    return "Untitled Story"
 
 
 @asynccontextmanager
@@ -66,8 +122,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include auth router
+# Include routers
 app.include_router(auth_router)
+from stories import router as stories_router
+app.include_router(stories_router)
 
 @app.get("/")
 async def root():
@@ -327,13 +385,21 @@ async def websocket_generate(websocket: WebSocket):
                 if story_content:
                     # Save story to database
                     try:
-                        # Extract title from story (usually first line after #)
+                        # Extract title from story - try markdown headers first
                         lines = story_content.split('\n')
-                        title = "Untitled Story"
+                        title = None
                         for line in lines:
                             if line.strip().startswith('#') and not line.strip().startswith('##'):
                                 title = line.strip('#').strip()
                                 break
+                        
+                        # If no markdown header found, generate title using AI
+                        if not title or title == "":
+                            print(f"[DEBUG] No markdown header found, generating AI title...")
+                            title = await generate_story_title(story_content, user_api_key, model or "anthropic/claude-3.5-haiku")
+                            print(f"[DEBUG] Generated title: '{title}'")
+                        else:
+                            print(f"[DEBUG] Extracted title from markdown: '{title}'")
                         
                         # Save to database with session reference
                         story_record = supabase.table("stories").insert({

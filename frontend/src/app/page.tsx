@@ -16,8 +16,10 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useAuth } from '@/contexts/AuthContext'
 import AuthModal from '@/components/Auth/AuthModal'
 import OpenRouterConnect from '@/components/Auth/OpenRouterConnect'
+import DraftRecovery from '@/components/DraftRecovery/DraftRecovery'
 import { createClient } from '@/lib/supabase/client'
 import { API_URL } from '@/config/api'
+import { draftManager, StoryDraft } from '@/utils/draftManager'
 
 // Define sound effects (commented out until sound files are added)
 // const sounds = {
@@ -36,6 +38,8 @@ function HomeContent() {
   const [sessionMetadata, setSessionMetadata] = useState<SessionMetadata | null>(null)
   const [showLogFormatMenu, setShowLogFormatMenu] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [showDraftRecovery, setShowDraftRecovery] = useState(false)
+  const [selectedDraft, setSelectedDraft] = useState<StoryDraft | null>(null)
   const sessionStartTimeRef = useRef<Date | null>(null)
   const { currentTheme } = useTheme()
   const { user, loading: authLoading, hasOpenRouterKey, checkOpenRouterKey } = useAuth()
@@ -61,7 +65,8 @@ function HomeContent() {
     agentStates,
     currentActivity,
     streamingMessages,
-    currentStreamingAgent
+    currentStreamingAgent,
+    connectionError
   } = useWebSocket(API_URL, getAuthToken)
 
   useEffect(() => {
@@ -77,9 +82,29 @@ function HomeContent() {
       // Only show welcome if we're in config view and haven't started configuring
       if (currentView !== 'config') {
         setShowWelcome(false)
+      } else {
+        // Check for draft recovery when entering config view
+        checkForDraftRecovery()
       }
     }
   }, [authLoading, user, hasOpenRouterKey, currentView])
+
+  // Check for existing drafts that can be recovered
+  const checkForDraftRecovery = async () => {
+    try {
+      // Give a moment for the auth context to settle
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      const autoSaved = draftManager.getAutoSavedDraft()
+      const manualDrafts = draftManager.getManualDrafts()
+      
+      if (autoSaved || manualDrafts.length > 0) {
+        setShowDraftRecovery(true)
+      }
+    } catch (error) {
+      console.error('Failed to check for draft recovery:', error)
+    }
+  }
 
   // Handle navigation to signin
   useEffect(() => {
@@ -151,6 +176,23 @@ function HomeContent() {
     
     setCurrentView('generation')
     // sounds.alert.play()
+  }
+
+  // Draft recovery handlers
+  const handleDraftRestore = (draft: StoryDraft) => {
+    setSelectedDraft(draft)
+    setShowDraftRecovery(false)
+    setShowWelcome(false)
+  }
+
+  const handleDraftDismiss = () => {
+    setShowDraftRecovery(false)
+    setShowWelcome(false)
+  }
+
+  const handleNewStory = () => {
+    setShowDraftRecovery(false)
+    setShowWelcome(false)
   }
 
   // Monitor for story completion and update metadata
@@ -234,6 +276,7 @@ function HomeContent() {
           <StoryConfig 
             onSubmit={handleStorySubmit} 
             onChangeTheme={() => setShowWelcome(true)}
+            initialDraft={selectedDraft}
           />
         )}
       
@@ -541,7 +584,17 @@ function HomeContent() {
             )}
           </div>
           
-          {/* Session ID display removed - stories are automatically saved */}
+          <div className="story-saved-notice">
+            <div className="saved-indicator">
+              ✓ Story automatically saved to your library
+            </div>
+            <button 
+              className={`terminal-button ${currentTheme.id === 'fantasy' ? 'fantasy-action-button' : currentTheme.id === 'romance' ? 'romance-button' : currentTheme.id === 'cyberpunk' ? 'cyberpunk-button' : currentTheme.id === 'scifi' ? 'scifi-button' : currentTheme.id === 'noir' ? 'noir-button' : currentTheme.id === 'scp' ? 'scp-button' : ''}`}
+              onClick={() => router.push('/stories')}
+            >
+              VIEW MY STORIES
+            </button>
+          </div>
           
           <div className="story-actions">
             <div className="action-row">
@@ -1083,7 +1136,20 @@ function HomeContent() {
           font-family: inherit;
         }
         
-        /* Session info styles removed - no longer displaying session ID */
+        .story-saved-notice {
+          text-align: center;
+          margin: 20px 0;
+          padding: 15px;
+          border: 1px solid var(--terminal-green);
+          background: rgba(0, 255, 0, 0.05);
+        }
+        
+        .saved-indicator {
+          color: var(--terminal-bright-green);
+          font-size: 14px;
+          margin-bottom: 10px;
+          text-shadow: 0 0 5px var(--terminal-green);
+        }
         
         .story-actions {
           display: flex;
@@ -1864,6 +1930,15 @@ function HomeContent() {
         }
       `}</style>
       </Terminal>
+      
+      {/* Draft Recovery Modal */}
+      {showDraftRecovery && (
+        <DraftRecovery
+          onRestore={handleDraftRestore}
+          onDismiss={handleDraftDismiss}
+          onNewStory={handleNewStory}
+        />
+      )}
     </>
   )
 }

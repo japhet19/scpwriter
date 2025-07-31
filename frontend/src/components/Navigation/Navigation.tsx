@@ -72,32 +72,44 @@ export default function Navigation() {
           </button>
         </div>
 
-        {/* Support Buttons - Desktop/Tablet */}
-        <SupportButtons />
+        {/* Main Navigation Links */}
+        <div className={styles.navLinks}>
+          {user && (
+            <Link href="/stories" className={styles.navLink}>
+              <span className={styles.navLinkIcon}>&gt;</span>
+              <span className={styles.navLinkText}>My Stories</span>
+            </Link>
+          )}
+        </div>
 
         {/* Desktop User Section */}
         <div className={styles.userSection}>
           {loading ? (
             <span className={styles.loadingText}>AUTHENTICATING...</span>
           ) : user ? (
-            <div className={styles.userMenu} ref={menuRef}>
-              <button
-                onClick={toggleUserMenu}
-                className={styles.userButton}
-                aria-expanded={isUserMenuOpen}
-                aria-haspopup="true"
-                aria-label="User menu"
-              >
-                <span className={styles.username}>[{getUserDisplayName()}@plotcraft]</span>
-                <span className={styles.dropdownIcon}>▼</span>
-              </button>
-              {isUserMenuOpen && (
-                <UserMenu 
-                  onClose={() => setIsUserMenuOpen(false)}
-                  username={getUserDisplayName()}
-                />
-              )}
-            </div>
+            <>
+              <div className={styles.userMenu} ref={menuRef}>
+                <button
+                  onClick={toggleUserMenu}
+                  className={styles.userButton}
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="true"
+                  aria-label="User menu"
+                >
+                  <span className={styles.username}>[{getUserDisplayName()}@plotcraft]</span>
+                  <span className={styles.dropdownIcon}>▼</span>
+                </button>
+                {isUserMenuOpen && (
+                  <UserMenu 
+                    onClose={() => setIsUserMenuOpen(false)}
+                    username={getUserDisplayName()}
+                  />
+                )}
+              </div>
+              
+              {/* Support Buttons - moved to right of profile */}
+              <SupportButtons />
+            </>
           ) : null}
         </div>
 
@@ -120,6 +132,28 @@ export default function Navigation() {
           <div className={styles.mobileUserInfo}>
             [{getUserDisplayName()}@plotcraft]
           </div>
+          <div className={styles.mobileDivider}>━━━━━━━━━━━━━━━</div>
+          
+          <button 
+            onClick={() => {
+              router.push('/stories')
+              setIsMobileMenuOpen(false)
+            }}
+            className={styles.mobileMenuItem}
+          >
+            &gt; My Stories
+          </button>
+          
+          <button 
+            onClick={() => {
+              router.push('/')
+              setIsMobileMenuOpen(false)
+            }}
+            className={styles.mobileMenuItem}
+          >
+            &gt; New Story
+          </button>
+          
           <div className={styles.mobileDivider}>━━━━━━━━━━━━━━━</div>
           
           {/* Support Links in Mobile Menu */}

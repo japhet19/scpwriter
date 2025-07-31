@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { io, Socket } from 'socket.io-client'
 import { ThemeOptions } from '@/types/themeOptions'
 
 export interface AgentMessage {
@@ -45,35 +44,54 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
   const [currentActivity, setCurrentActivity] = useState<string>('')
   const [streamingMessages, setStreamingMessages] = useState<Record<string, string>>({})
   const [currentStreamingAgent, setCurrentStreamingAgent] = useState<string | null>(null)
+  const [connectionError, setConnectionError] = useState<string | null>(null)
   const socketRef = useRef<WebSocket | null>(null)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectAttemptsRef = useRef(0)
+  const maxReconnectAttempts = 5
 
   const connect = useCallback(() => {
     if (socketRef.current?.readyState === WebSocket.OPEN) return
 
-    const ws = new WebSocket(`${url.replace('http', 'ws')}/ws/generate`)
-    
-    ws.onopen = async () => {
-      console.log('WebSocket connected')
+    try {
+      const wsUrl = `${url.replace('http', 'ws')}/ws/generate`
+      console.log('Attempting WebSocket connection to:', wsUrl)
       
-      // Send auth token if available
-      if (getAuthToken) {
-        const token = await getAuthToken()
-        if (token) {
-          ws.send(JSON.stringify({
-            type: 'auth',
-            token: token
-          }))
-        } else {
-          console.error('No auth token available')
-          ws.close()
-          return
+      const ws = new WebSocket(wsUrl)
+      socketRef.current = ws
+      
+      ws.onopen = async () => {
+        console.log('WebSocket connected successfully')
+        setConnectionError(null)
+        reconnectAttemptsRef.current = 0
+        
+        // Send auth token if available
+        if (getAuthToken) {
+          try {
+            const token = await getAuthToken()
+            if (token) {
+              ws.send(JSON.stringify({
+                type: 'auth',
+                token: token
+              }))
+            } else {
+              console.error('No auth token available')
+              setConnectionError('Authentication failed: No token available')
+              ws.close()
+              return
+            }
+          } catch (error) {
+            console.error('Failed to get auth token:', error)
+            setConnectionError('Authentication failed: Token retrieval error')
+            ws.close()
+            return
+          }
         }
+        
+        setIsConnected(true)
       }
-      
-      setIsConnected(true)
-    }
 
-    ws.onmessage = (event) => {
+      ws.onmessage = (event) => {
       const data: AgentMessage = JSON.parse(event.data)
       
       // Handle auth response
@@ -155,28 +173,63 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
       }
     }
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error)
-      setIsConnected(false)
-      // Add more detailed error logging
-      console.error('WebSocket connection failed. URL:', `${url.replace('http', 'ws')}/ws/generate`)
-      console.error('Make sure the backend server is running on', url)
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error)
+        setIsConnected(false)
+        setConnectionError('WebSocket connection error')
+        // Add more detailed error logging
+        console.error('WebSocket connection failed. URL:', `${url.replace('http', 'ws')}/ws/generate`)
+        console.error('Make sure the backend server is running on', url)
     }
 
-    ws.onclose = (event) => {
-      console.log('WebSocket disconnected')
-      console.log('Close event code:', event.code, 'reason:', event.reason)
-      setIsConnected(false)
-      setIsGenerating(false)
-      
-      // Log specific close reasons
-      if (event.code === 1006) {
-        console.error('WebSocket closed abnormally - server may be down or endpoint may not exist')
+      ws.onclose = (event) => {
+        console.log('WebSocket disconnected')
+        console.log('Close event code:', event.code, 'reason:', event.reason)
+        setIsConnected(false)
+        setIsGenerating(false)
+        
+        // Clear streaming if connection is lost
+        setStreamingMessages({})
+        setCurrentStreamingAgent(null)
+        
+        // Log specific close reasons
+        if (event.code === 1006) {
+          console.error('WebSocket closed abnormally - server may be down or endpoint may not exist')
+          setConnectionError('Connection lost - server may be down')
+        }
+        
+        // Only attempt reconnect if it wasn't a clean close (code 1000)
+        if (event.code !== 1000 && reconnectAttemptsRef.current < maxReconnectAttempts) {
+          scheduleReconnect()
+        } else if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
+          setConnectionError(`Connection failed after ${maxReconnectAttempts} attempts`)
+        }
       }
-    }
 
-    socketRef.current = ws
-  }, [url])
+      socketRef.current = ws
+    } catch (error) {
+      console.error('Failed to create WebSocket connection:', error)
+      setConnectionError(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      scheduleReconnect()
+    }
+  }, [url, getAuthToken])
+
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+    }
+    
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000) // Max 30s delay
+    reconnectAttemptsRef.current++
+    
+    console.log(`Scheduling reconnect attempt ${reconnectAttemptsRef.current} in ${delay}ms`)
+    
+    reconnectTimeoutRef.current = setTimeout(() => {
+      if (reconnectAttemptsRef.current <= maxReconnectAttempts) {
+        connect()
+      }
+    }, delay)
+  }, [connect])
 
   const generateStory = useCallback((params: StoryGenerationParams) => {
     if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
@@ -193,6 +246,18 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
   }, [])
 
   const disconnect = useCallback(() => {
+    setIsConnected(false)
+    
+    // Clear any pending reconnection attempts
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+    
+    // Reset reconnection attempts
+    reconnectAttemptsRef.current = 0
+    setConnectionError(null)
+    
     if (socketRef.current) {
       socketRef.current.close()
       socketRef.current = null
@@ -201,6 +266,10 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
 
   useEffect(() => {
     return () => {
+      // Cleanup reconnect timeout on unmount
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+      }
       disconnect()
     }
   }, [disconnect])
@@ -218,6 +287,7 @@ export function useWebSocket(url: string = 'http://localhost:8000', getAuthToken
     agentStates,
     currentActivity,
     streamingMessages,
-    currentStreamingAgent
+    currentStreamingAgent,
+    connectionError
   }
 }

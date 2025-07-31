@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import styles from './StoryConfig.module.css'
 import { MODEL_CATEGORIES, DEFAULT_MODEL, getModelById, getCostIndicator, ModelInfo } from '@/config/models'
 import TerminalDropdown from '@/components/TerminalDropdown/TerminalDropdown'
@@ -16,6 +16,7 @@ import NoirOptions from '@/components/ThemeOptions/NoirOptions'
 import SciFiOptions from '@/components/ThemeOptions/SciFiOptions'
 import CostEstimate from '@/components/CostEstimate/CostEstimate'
 import { estimateStoryCost } from '@/utils/costEstimator'
+import { draftManager, StoryDraft, formatDraftAge } from '@/utils/draftManager'
 
 interface StoryConfigProps {
   onSubmit: (config: StoryConfiguration) => void
@@ -31,7 +32,12 @@ export interface StoryConfiguration {
   themeOptions: ThemeOptions
 }
 
-export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProps) {
+interface StoryConfigWithAutoSaveProps extends StoryConfigProps {
+  initialDraft?: StoryDraft
+  onDraftSaved?: (draftId: string) => void
+}
+
+export default function StoryConfig({ onSubmit, onChangeTheme, initialDraft, onDraftSaved }: StoryConfigWithAutoSaveProps) {
   const [theme, setTheme] = useState('')
   const [pages, setPages] = useState(3)
   const [protagonist, setProtagonist] = useState('')
@@ -42,13 +48,81 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
   const [themeOptions, setThemeOptions] = useState<ThemeOptions>(() => getDefaultThemeOptions(themeId))
   const [costEstimate, setCostEstimate] = useState<ReturnType<typeof estimateStoryCost>>(null)
   
+  // Auto-save related state
+  const [lastAutoSave, setLastAutoSave] = useState<Date | null>(null)
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [showSaveDraftModal, setShowSaveDraftModal] = useState(false)
+  const [draftName, setDraftName] = useState('')
+  const [manualDrafts, setManualDrafts] = useState<StoryDraft[]>([])
+  
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasUserInteractedRef = useRef(false)
+  
   // Get the selected theme's configuration
   const selectedThemeConfig = getTheme(selectedTheme)
 
-  // Reset theme options when theme changes
+  // Load initial draft if provided
   useEffect(() => {
-    setThemeOptions(getDefaultThemeOptions(selectedTheme))
-  }, [selectedTheme])
+    if (initialDraft) {
+      setTheme(initialDraft.theme)
+      setPages(initialDraft.pages)
+      setProtagonist(initialDraft.protagonist || '')
+      setSelectedModel(initialDraft.model)
+      setSelectedTheme(initialDraft.uiTheme)
+      setThemeOptions(initialDraft.themeOptions)
+      hasUserInteractedRef.current = true
+    }
+  }, [initialDraft])
+
+  // Load manual drafts
+  useEffect(() => {
+    const loadDrafts = () => {
+      const drafts = draftManager.getManualDrafts()
+      setManualDrafts(drafts)
+    }
+    loadDrafts()
+  }, [])
+
+  // Reset theme options when theme changes (but not if we're loading from draft)
+  useEffect(() => {
+    if (!initialDraft) {
+      setThemeOptions(getDefaultThemeOptions(selectedTheme))
+    }
+  }, [selectedTheme, initialDraft])
+
+  // Create current config object
+  const getCurrentConfig = useCallback(() => ({
+    theme,
+    pages,
+    protagonist,
+    model: selectedModel,
+    uiTheme: selectedTheme,
+    themeOptions
+  }), [theme, pages, protagonist, selectedModel, selectedTheme, themeOptions])
+
+  // Auto-save logic
+  const triggerAutoSave = useCallback(() => {
+    if (!hasUserInteractedRef.current) return
+    
+    const config = getCurrentConfig()
+    
+    // Only auto-save if there's meaningful content
+    if (!config.theme.trim() || config.theme.length < 10) return
+    
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current)
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      draftManager.startAutoSave(config)
+      setLastAutoSave(new Date())
+    }, 2000) // 2 second delay after user stops typing
+  }, [getCurrentConfig])
+
+  // Trigger auto-save when config changes
+  useEffect(() => {
+    triggerAutoSave()
+  }, [theme, pages, protagonist, selectedModel, selectedTheme, themeOptions, triggerAutoSave])
 
   // Update cost estimate when model or pages change
   useEffect(() => {
@@ -59,23 +133,35 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
     }
   }, [selectedModel, pages])
 
+  // Cleanup auto-save on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current)
+      }
+      draftManager.stopAutoSave()
+    }
+  }, [])
+
   // Render the appropriate theme options component
   const renderThemeOptions = () => {
+    const handleThemeOptionsChange = handleInputChange(setThemeOptions)
+    
     switch (selectedTheme) {
       case 'scp':
-        return <SCPOptions options={themeOptions as any} onChange={setThemeOptions} />
+        return <SCPOptions options={themeOptions as any} onChange={handleThemeOptionsChange} />
       case 'fantasy':
-        return <FantasyOptions options={themeOptions as any} onChange={setThemeOptions} />
+        return <FantasyOptions options={themeOptions as any} onChange={handleThemeOptionsChange} />
       case 'cyberpunk':
-        return <CyberpunkOptions options={themeOptions as any} onChange={setThemeOptions} />
+        return <CyberpunkOptions options={themeOptions as any} onChange={handleThemeOptionsChange} />
       case 'romance':
-        return <RomanceOptions options={themeOptions as any} onChange={setThemeOptions} />
+        return <RomanceOptions options={themeOptions as any} onChange={handleThemeOptionsChange} />
       case 'noir':
-        return <NoirOptions options={themeOptions as any} onChange={setThemeOptions} />
+        return <NoirOptions options={themeOptions as any} onChange={handleThemeOptionsChange} />
       case 'scifi':
-        return <SciFiOptions options={themeOptions as any} onChange={setThemeOptions} />
+        return <SciFiOptions options={themeOptions as any} onChange={handleThemeOptionsChange} />
       default:
-        return <SCPOptions options={themeOptions as any} onChange={setThemeOptions} />
+        return <SCPOptions options={themeOptions as any} onChange={handleThemeOptionsChange} />
     }
   }
 
@@ -91,12 +177,57 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
       
       setProtagonist(generatedName)
       setIsGeneratingName(false)
+      hasUserInteractedRef.current = true
     }, 500)
+  }
+
+  const handleManualSave = async () => {
+    if (!draftName.trim()) return
+    
+    try {
+      setIsSavingDraft(true)
+      const config = getCurrentConfig()
+      const draftId = await draftManager.saveNamedDraft(draftName.trim(), config)
+      
+      // Refresh manual drafts list
+      const updatedDrafts = draftManager.getManualDrafts()
+      setManualDrafts(updatedDrafts)
+      
+      setShowSaveDraftModal(false)
+      setDraftName('')
+      
+      if (onDraftSaved) {
+        onDraftSaved(draftId)
+      }
+    } catch (error) {
+      console.error('Failed to save draft:', error)
+      alert('Failed to save configuration. Please try again.')
+    } finally {
+      setIsSavingDraft(false)
+    }
+  }
+
+  const handleLoadDraft = (draft: StoryDraft) => {
+    setTheme(draft.theme)
+    setPages(draft.pages)
+    setProtagonist(draft.protagonist || '')
+    setSelectedModel(draft.model)
+    setSelectedTheme(draft.uiTheme)
+    setThemeOptions(draft.themeOptions)
+    hasUserInteractedRef.current = true
+  }
+
+  const handleInputChange = (setter: (value: any) => void) => (value: any) => {
+    hasUserInteractedRef.current = true
+    setter(value)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!theme.trim()) return
+    
+    // Clear auto-save when story generation starts
+    draftManager.clearAutoSave()
     
     onSubmit({
       theme,
@@ -132,12 +263,56 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
           <span>{selectedThemeConfig.formConfig.statusLine2}</span>
         </div>
 
+        {/* Auto-save Status */}
+        {hasUserInteractedRef.current && (
+          <div className={styles.autoSaveStatus}>
+            <div className={styles.autoSaveInfo}>
+              {lastAutoSave && (
+                <span className={styles.autoSaveIndicator}>
+                  ✓ Auto-saved {formatDraftAge(lastAutoSave)}
+                </span>
+              )}
+              <div className={styles.draftActions}>
+                <button
+                  type="button"
+                  className={`${styles.draftButton} terminal-button small`}
+                  onClick={() => setShowSaveDraftModal(true)}
+                  disabled={!theme.trim() || theme.length < 10}
+                >
+                  SAVE CONFIG
+                </button>
+                {manualDrafts.length > 0 && (
+                  <div className={styles.draftsDropdown}>
+                    <select
+                      className="terminal-input small"
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const draft = manualDrafts.find(d => d.id === e.target.value)
+                          if (draft) handleLoadDraft(draft)
+                        }
+                      }}
+                    >
+                      <option value="">Load Saved...</option>
+                      {manualDrafts.map(draft => (
+                        <option key={draft.id} value={draft.id}>
+                          {draft.name} ({formatDraftAge(draft.updatedAt)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className={styles.formGroup}>
           <label className={styles.label}>▼ {selectedThemeConfig.formConfig.descriptionLabel}</label>
           <textarea
             className={`terminal-input ${selectedTheme === 'romance' ? 'romance-input' : ''}`}
             value={theme}
-            onChange={(e) => setTheme(e.target.value)}
+            onChange={handleInputChange((e: React.ChangeEvent<HTMLTextAreaElement>) => setTheme(e.target.value))}
             placeholder={selectedThemeConfig.formConfig.descriptionPlaceholder}
             rows={3}
             required
@@ -149,7 +324,7 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
                 key={idx}
                 type="button"
                 className={styles.exampleButton}
-                onClick={() => setTheme(example)}
+                onClick={handleInputChange(() => setTheme(example))}
               >
                 • {example}
               </button>
@@ -169,7 +344,7 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
                     name="pages"
                     value={num}
                     checked={pages === num}
-                    onChange={() => setPages(num)}
+                    onChange={handleInputChange(() => setPages(num))}
                   />
                   <span className="led-indicator" />
                   <span>{num}</span>
@@ -186,7 +361,7 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
                 type="text"
                 className={`terminal-input ${selectedTheme === 'romance' ? 'romance-input' : ''}`}
                 value={protagonist}
-                onChange={(e) => setProtagonist(e.target.value)}
+                onChange={handleInputChange((e: React.ChangeEvent<HTMLInputElement>) => setProtagonist(e.target.value))}
                 placeholder="Enter name or generate..."
               />
               <button
@@ -209,7 +384,7 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
               <TerminalDropdown
                 categories={MODEL_CATEGORIES}
                 value={selectedModel}
-                onChange={setSelectedModel}
+                onChange={handleInputChange(setSelectedModel)}
               />
               {(() => {
                 const model = getModelById(selectedModel)
@@ -248,6 +423,47 @@ export default function StoryConfig({ onSubmit, onChangeTheme }: StoryConfigProp
       <div className={styles.formFooter}>
         <h2>└──────────────────────────────────────────────────────┘</h2>
       </div>
+
+      {/* Save Draft Modal */}
+      {showSaveDraftModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.saveModal}>
+            <div className={styles.modalHeader}>
+              <h3>Save Configuration</h3>
+            </div>
+            <div className={styles.modalContent}>
+              <label>Configuration Name:</label>
+              <input
+                type="text"
+                className="terminal-input"
+                value={draftName}
+                onChange={(e) => setDraftName(e.target.value)}
+                placeholder="Enter a name for this configuration..."
+                maxLength={50}
+                autoFocus
+              />
+            </div>
+            <div className={styles.modalActions}>
+              <button
+                className="terminal-button"
+                onClick={handleManualSave}
+                disabled={!draftName.trim() || isSavingDraft}
+              >
+                {isSavingDraft ? 'SAVING...' : 'SAVE'}
+              </button>
+              <button
+                className="terminal-button"
+                onClick={() => {
+                  setShowSaveDraftModal(false)
+                  setDraftName('')
+                }}
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import styles from './CostEstimate.module.css'
 import { CostEstimate as CostEstimateType, formatCostEstimate, getCostLevelFromEstimate, getCostWarning } from '@/utils/costEstimator'
 
@@ -9,64 +9,91 @@ interface CostEstimateProps {
   className?: string
 }
 
+interface TooltipState {
+  showTooltip: boolean
+  expandedExplanation: boolean
+  tooltipPersisted: boolean
+}
+
 export default function CostEstimate({ estimate, className }: CostEstimateProps) {
-  const [showTooltip, setShowTooltip] = useState(false)
-  const [expandedExplanation, setExpandedExplanation] = useState(false)
-  const [tooltipPersisted, setTooltipPersisted] = useState(false)
+  // Always initialize hooks in the same order - no early returns
+  const [tooltipState, setTooltipState] = useState<TooltipState>({
+    showTooltip: false,
+    expandedExplanation: false,
+    tooltipPersisted: false
+  })
   
-  if (!estimate) {
-    return null
+  const containerRef = useRef<HTMLDivElement>(null)
+  
+  // Safe computation - only calculate if estimate exists
+  const costLevel = estimate ? getCostLevelFromEstimate(estimate) : ''
+  const warning = estimate ? getCostWarning(estimate) : null
+  
+  // Simple event handlers without useCallback to avoid hook violations
+  const closeTooltip = () => {
+    setTooltipState({
+      showTooltip: false,
+      expandedExplanation: false,
+      tooltipPersisted: false
+    })
   }
   
-  const costLevel = getCostLevelFromEstimate(estimate)
-  const warning = getCostWarning(estimate)
+  const showTooltipPersisted = () => {
+    setTooltipState(prev => ({
+      ...prev,
+      showTooltip: true,
+      tooltipPersisted: true
+    }))
+  }
   
-  // Handle clicking outside to dismiss tooltip
-  React.useEffect(() => {
+  const toggleExplanation = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setTooltipState(prev => ({
+      ...prev,
+      expandedExplanation: !prev.expandedExplanation,
+      tooltipPersisted: true
+    }))
+  }
+  
+  // Handle outside clicks and escape key
+  useEffect(() => {
+    if (typeof document === 'undefined' || !tooltipState.tooltipPersisted) {
+      return
+    }
+    
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      if (tooltipPersisted && !target.closest(`.${styles.costEstimate}`)) {
-        setTooltipPersisted(false)
-        setShowTooltip(false)
-        setExpandedExplanation(false)
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        closeTooltip()
       }
     }
     
     const handleEscKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && tooltipPersisted) {
-        setTooltipPersisted(false)
-        setShowTooltip(false)
-        setExpandedExplanation(false)
+      if (e.key === 'Escape') {
+        closeTooltip()
       }
     }
     
-    if (tooltipPersisted) {
-      document.addEventListener('click', handleClickOutside)
-      document.addEventListener('keydown', handleEscKey)
-    }
+    document.addEventListener('click', handleClickOutside)
+    document.addEventListener('keydown', handleEscKey)
     
     return () => {
       document.removeEventListener('click', handleClickOutside)
       document.removeEventListener('keydown', handleEscKey)
     }
-  }, [tooltipPersisted])
+  }, [tooltipState.tooltipPersisted])
   
-  const handleInfoClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setExpandedExplanation(!expandedExplanation)
-    setTooltipPersisted(true)
+  // Always render consistent structure - handle null estimate with conditional content
+  if (!estimate) {
+    return <div className={`${styles.costEstimate} ${className || ''}`} style={{ display: 'none' }} />
   }
-  
+
   return (
-    <div className={`${styles.costEstimate} ${className || ''}`}>
+    <div className={`${styles.costEstimate} ${className || ''}`} ref={containerRef}>
       <div 
         className={styles.costDisplay}
-        onMouseEnter={() => !tooltipPersisted && setShowTooltip(true)}
-        onMouseLeave={() => !tooltipPersisted && setShowTooltip(false)}
-        onClick={() => {
-          setTooltipPersisted(true)
-          setShowTooltip(true)
-        }}
+        onMouseEnter={() => !tooltipState.tooltipPersisted && setTooltipState(prev => ({ ...prev, showTooltip: true }))}
+        onMouseLeave={() => !tooltipState.tooltipPersisted && setTooltipState(prev => ({ ...prev, showTooltip: false }))}
+        onClick={showTooltipPersisted}
       >
         <span className={styles.label}>Estimated Cost:</span>
         <span className={styles.amount}>{formatCostEstimate(estimate)}</span>
@@ -79,14 +106,14 @@ export default function CostEstimate({ estimate, className }: CostEstimateProps)
         </div>
       )}
       
-      {(showTooltip || tooltipPersisted) && (
+      {(tooltipState.showTooltip || tooltipState.tooltipPersisted) && (
         <div className={styles.tooltip}>
           <div className={styles.tooltipContent}>
             <h4>
               Cost Breakdown 
               <button 
                 className={styles.infoIcon}
-                onClick={handleInfoClick}
+                onClick={toggleExplanation}
                 aria-label="Toggle algorithm explanation"
                 title="Why these multipliers?"
               >
@@ -111,7 +138,7 @@ export default function CostEstimate({ estimate, className }: CostEstimateProps)
               * Multi-agent system generates extensive feedback and discussion
             </div>
             
-            {expandedExplanation && (
+            {tooltipState.expandedExplanation && (
               <div className={styles.explanation}>
                 <div className={styles.explanationHeader}>▼ Why these multipliers?</div>
                 <div className={styles.explanationContent}>
